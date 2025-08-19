@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Fresh Cart Catalog</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f5fff7;
+      margin: 0;
+    }
+
+    header {
+      background-color: #4caf50;
+      color: white;
+      padding: 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 1.8rem;
+    }
+
+    .search-filter {
+      display: flex;
+      gap: 1rem;
+    }
+
+    .search-filter input, .search-filter select {
+      padding: 0.5rem;
+      border-radius: 0.5rem;
+      border: 1px solid #ccc;
+    }
+
+    .cart-icon {
+      position: relative;
+      font-size: 1.5rem;
+      cursor: pointer;
+    }
+
+    .cart-icon::after {
+      content: attr(data-count);
+      position: absolute;
+      top: -8px;
+      right: -12px;
+      background: red;
+      color: white;
+      font-size: 0.7rem;
+      padding: 2px 6px;
+      border-radius: 50%;
+    }
+
+    .catalog {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1rem;
+      padding: 1rem;
+    }
+
+    .product-card {
+      background-color: #ffffff;
+      border-radius: 12px;
+      padding: 1rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+
+    .product-card img {
+      width: 100%;
+      height: 180px;
+      object-fit: cover;
+      border-radius: 10px;
+    }
+
+    select, .add-cart {
+      width: 100%;
+      margin: 0.5rem 0;
+      padding: 0.5rem;
+      border-radius: 0.5rem;
+    }
+
+    .add-cart {
+      background: #4caf50;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+
+    .add-cart:hover {
+      background: #388e3c;
+    }
+
+    #cart-modal {
+      display: none;
+      position: fixed;
+      top: 15%;
+      right: 5%;
+      width: 300px;
+      background: white;
+      padding: 1rem;
+      border-radius: 12px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.3);
+      z-index: 1000;
+    }
+
+    #cart-modal ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    #cart-modal li {
+      margin-bottom: 0.5rem;
+    }
+
+    .checkout {
+      margin-top: 1rem;
+      background-color: #4caf50;
+      color: white;
+      padding: 0.5rem;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    .checkout:hover {
+      background: #2e7d32;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Fresh Cart</h1>
+  <div class="search-filter">
+    <input type="text" id="searchBar" placeholder="Search products..." />
+    <select id="categoryFilter">
+      <option value="all">All Categories</option>
+      <option value="fruits">Fruits</option>
+      <option value="vegetables">Vegetables</option>
+      <option value="bakery">Bakery</option>
+    </select>
+    <div class="cart-icon" onclick="toggleCart()" data-count="0">🛒</div>
+  </div>
+</header>
+
+<main class="catalog" id="catalog"></main>
+
+<div id="cart-modal">
+  <h3>Your Cart</h3>
+  <ul id="cart-items"></ul>
+  <p>Total: ₹<span id="cart-total">0</span></p>
+  <button class="checkout" onclick="alert('Proceeding to distributor selection...')">Checkout</button>
+</div>
+
+<script>
+  const catalog = document.getElementById("catalog");
+  const searchBar = document.getElementById("searchBar");
+  const categoryFilter = document.getElementById("categoryFilter");
+
+  const products = [
+    {
+      name: "Apple",
+      category: "fruits",
+      image: "https://source.unsplash.com/featured/?apple,fruit",
+      unit: "kg",
+      variants: {
+        "Kashmiri": [
+          { brand: "FreshFarm", price: 120 },
+          { brand: "Nature's Best", price: 130 }
+        ],
+        "Green": [
+          { brand: "GreenDelight", price: 110 },
+          { brand: "HealthyHarvest", price: 115 }
+        ]
+      }
+    },
+    {
+      name: "Banana",
+      category: "fruits",
+      image: "https://source.unsplash.com/featured/?banana,fruit",
+      unit: "kg",
+      variants: {
+        "Cavendish": [
+          { brand: "TropicalTaste", price: 40 },
+          { brand: "BananaKing", price: 45 }
+        ],
+        "Red": [
+          { brand: "RedBananaCo", price: 50 },
+          { brand: "ExoticFruits", price: 55 }
+        ]
+      }
+    },
+    {
+      name: "Carrot",
+      category: "vegetables",
+      image: "https://source.unsplash.com/featured/?carrot,vegetable",
+      unit: "kg",
+      variants: {
+        "Organic": [
+          { brand: "RootHarvest", price: 45 },
+          { brand: "VeggiePure", price: 48 }
+        ],
+        "Regular": [
+          { brand: "CrunchFarm", price: 35 },
+          { brand: "DailyVeg", price: 38 }
+        ]
+      }
+    },
+    {
+      name: "Tomato",
+      category: "vegetables",
+      image: "https://source.unsplash.com/featured/?tomato,vegetable",
+      unit: "kg",
+      variants: {
+        "Cherry": [
+          { brand: "Tomberry", price: 55 },
+          { brand: "RedGem", price: 60 }
+        ],
+        "Hybrid": [
+          { brand: "TomatoCo", price: 45 },
+          { brand: "FarmFresh", price: 50 }
+        ]
+      }
+    },
+    {
+      name: "Muffin",
+      category: "bakery",
+      image: "https://source.unsplash.com/featured/?muffin,bakery",
+      unit: "pcs",
+      variants: {
+        "Chocolate Chip": [
+          { brand: "ChocoBakes", price: 35 },
+          { brand: "MuffinTime", price: 38 }
+        ],
+        "Blueberry": [
+          { brand: "BerryMuffin", price: 32 },
+          { brand: "MorningBake", price: 36 }
+        ]
+      }
+    },
+    {
+      name: "Bread",
+      category: "bakery",
+      image: "https://source.unsplash.com/featured/?bread,bakery",
+      unit: "pcs",
+      variants: {
+        "White Bread": [
+          { brand: "ClassicSlice", price: 22 },
+          { brand: "WhiteFresh", price: 24 }
+        ],
+        "Brown Bread": [
+          { brand: "BrownBite", price: 25 },
+          { brand: "HealthyCrust", price: 27 }
+        ]
+      }
+    }
+  ];
+
+  let cart = [];
+
+  function renderProducts(filterText = "", category = "all") {
+    catalog.innerHTML = "";
+    products.forEach((product, index) => {
+      if (
+        (category === "all" || product.category === category) &&
+        product.name.toLowerCase().includes(filterText.toLowerCase())
+      ) {
+        const card = document.createElement("div");
+        card.className = "product-card";
+
+        const variantKeys = Object.keys(product.variants);
+        const firstVariant = variantKeys[0];
+        const brands = product.variants[firstVariant];
+
+        card.innerHTML = `
+          <img src="${product.image}" alt="${product.name}" />
+          <h3>${product.name}</h3>
+          <select class="variant-select">
+            ${variantKeys.map(v => `<option value="${v}">${v}</option>`).join("")}
+          </select>
+          <select class="brand-select">
+            ${brands.map(b => `<option value="${b.brand}" data-price="${b.price}">${b.brand} - ₹${b.price}</option>`).join("")}
+          </select>
+          <button class="add-cart">Add to Cart</button>
+        `;
+
+        card.querySelector(".variant-select").addEventListener("change", function () {
+          const selectedVariant = this.value;
+          const brandSelect = card.querySelector(".brand-select");
+          const brandOptions = product.variants[selectedVariant];
+          brandSelect.innerHTML = brandOptions.map(b =>
+            `<option value="${b.brand}" data-price="${b.price}">${b.brand} - ₹${b.price}</option>`).join("");
+        });
+
+        card.querySelector(".add-cart").addEventListener("click", () => {
+          const selectedVariant = card.querySelector(".variant-select").value;
+          const selectedBrand = card.querySelector(".brand-select").selectedOptions[0];
+          const brandName = selectedBrand.value;
+          const price = parseFloat(selectedBrand.dataset.price);
+          cart.push({ name: product.name, variant: selectedVariant, brand: brandName, price });
+          updateCart();
+        });
+
+        catalog.appendChild(card);
+      }
+    });
+  }
+
+  function updateCart() {
+    document.querySelector(".cart-icon").setAttribute("data-count", cart.length);
+    const cartItems = document.getElementById("cart-items");
+    cartItems.innerHTML = "";
+    let total = 0;
+    cart.forEach(item => {
+      const li = document.createElement("li");
+      li.textContent = `${item.name} (${item.variant}, ${item.brand}) - ₹${item.price}`;
+      cartItems.appendChild(li);
+      total += item.price;
+    });
+    document.getElementById("cart-total").textContent = total.toFixed(2);
+  }
+
+  function toggleCart() {
+    const cartModal = document.getElementById("cart-modal");
+    cartModal.style.display = cartModal.style.display === "block" ? "none" : "block";
+  }
+
+  searchBar.addEventListener("input", () => renderProducts(searchBar.value, categoryFilter.value));
+  categoryFilter.addEventListener("change", () => renderProducts(searchBar.value, categoryFilter.value));
+
+  renderProducts();
+</script>
+
+</body>
+</html>

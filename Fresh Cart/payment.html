@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Payment Page - Fresh Cart</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    body {
+      background-color: #f1f8e9;
+      font-family: Arial, sans-serif;
+      padding: 40px;
+      margin: 0;
+    }
+    h1 {
+      color: #2e7d32;
+      text-align: center;
+    }
+    .order-summary,
+    .payment-methods,
+    .payment-form {
+      background-color: #c8e6c9;
+      padding: 20px;
+      border-radius: 16px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      margin-bottom: 30px;
+    }
+    .order-summary h2,
+    .payment-methods h3,
+    .payment-form h3 {
+      color: #1b5e20;
+      font-size: 22px;
+      margin-bottom: 16px;
+    }
+    .order-item {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 10px;
+      font-size: 16px;
+    }
+    .order-item span {
+      color: #388e3c;
+    }
+    .payment-method {
+      background-color: #388e3c;
+      color: white;
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 15px;
+      cursor: pointer;
+      text-align: center;
+      font-size: 18px;
+    }
+    .payment-method:hover {
+      background-color: #2e7d32;
+    }
+    input {
+      padding: 12px;
+      width: 100%;
+      border-radius: 8px;
+      margin-bottom: 12px;
+      border: 1px solid #388e3c;
+      font-size: 16px;
+    }
+    button {
+      background-color: #388e3c;
+      color: white;
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+      width: 100%;
+      margin-top: 10px;
+    }
+    button:hover {
+      background-color: #2e7d32;
+    }
+    .back-button {
+      display: block;
+      background-color: #2e7d32;
+      color: white;
+      padding: 10px 20px;
+      border-radius: 8px;
+      text-align: center;
+      margin-top: 20px;
+      cursor: pointer;
+      width: 100%;
+    }
+    .back-button:hover {
+      background-color: #388e3c;
+    }
+  </style>
+</head>
+<body>
+  <h1>Payment Page</h1>
+
+  <!-- Order Summary -->
+  <div class="order-summary">
+    <h2>Order Summary</h2>
+    <div id="order-items"></div>
+    <div class="order-item" style="font-weight: bold;">
+      <span>Total</span>
+      <span id="grand-total">₹0</span>
+    </div>
+  </div>
+
+  <!-- Payment Methods -->
+  <div class="payment-methods">
+    <h3>Select Payment Method</h3>
+    <div class="payment-method" onclick="selectPayment('credit')">Credit/Debit Card</div>
+    <div class="payment-method" onclick="selectPayment('upi')">UPI (Google Pay, PhonePe)</div>
+    <div class="payment-method" onclick="selectPayment('cash')">Cash on Delivery</div>
+  </div>
+
+  <!-- Payment Form -->
+  <div id="payment-form" class="payment-form" style="display: none;">
+    <h3>Enter Payment Details</h3>
+
+    <!-- Credit/Debit Card -->
+    <div id="credit-card-form" style="display: none;">
+      <input type="text" id="cardNumber" placeholder="Card Number" />
+      <input type="text" id="expiryDate" placeholder="Expiry Date (MM/YY)" />
+      <input type="text" id="cvv" placeholder="CVV" />
+      <button onclick="submitPayment('credit')">Pay with Card</button>
+    </div>
+
+    <!-- UPI -->
+    <div id="upi-form" style="display: none;">
+      <input type="text" id="upiId" placeholder="Enter UPI ID" />
+      <button onclick="submitPayment('upi')">Pay with UPI</button>
+    </div>
+
+    <!-- Cash on Delivery -->
+    <div id="cash-form" style="display: none;">
+      <button onclick="submitPayment('cash')">Confirm Order with COD</button>
+    </div>
+  </div>
+
+  <!-- Back to Catalog -->
+  <div class="back-button" onclick="window.location.href='catalog.html'">Back to Catalog</div>
+
+  <script>
+    // Load cart from localStorage
+    const cart = JSON.parse(localStorage.getItem("cart") || "[]");
+    const orderItemsContainer = document.getElementById("order-items");
+    const grandTotalEl = document.getElementById("grand-total");
+    let total = 0;
+
+    cart.forEach(item => {
+      const itemRow = document.createElement("div");
+      itemRow.className = "order-item";
+      itemRow.innerHTML = `
+        <span>${item.name} x${item.quantity}</span>
+        <span>₹${item.price * item.quantity}</span>
+      `;
+      orderItemsContainer.appendChild(itemRow);
+      total += item.price * item.quantity;
+    });
+
+    grandTotalEl.textContent = "₹" + total;
+
+    function selectPayment(method) {
+      document.getElementById('payment-form').style.display = 'block';
+      document.getElementById('credit-card-form').style.display = 'none';
+      document.getElementById('upi-form').style.display = 'none';
+      document.getElementById('cash-form').style.display = 'none';
+
+      if (method === 'credit') {
+        document.getElementById('credit-card-form').style.display = 'block';
+      } else if (method === 'upi') {
+        document.getElementById('upi-form').style.display = 'block';
+      } else if (method === 'cash') {
+        document.getElementById('cash-form').style.display = 'block';
+      }
+    }
+
+    function submitPayment(method) {
+      if (method === 'credit') {
+        const cardNumber = document.getElementById('cardNumber').value;
+        const expiry = document.getElementById('expiryDate').value;
+        const cvv = document.getElementById('cvv').value;
+        if (!cardNumber || !expiry || !cvv) {
+          alert("Please enter all card details.");
+          return;
+        }
+      } else if (method === 'upi') {
+        const upiId = document.getElementById('upiId').value;
+        if (!upiId) {
+          alert("Please enter UPI ID.");
+          return;
+        }
+      }
+
+      // Clear cart and redirect
+      localStorage.removeItem("cart");
+      window.location.href = "final.html";
+    }
+  </script>
+</body>
+</html>
+

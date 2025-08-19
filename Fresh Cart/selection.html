@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Fresh Cart - Select Role</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #e8f5e9;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+    }
+
+    .header {
+      display: flex;
+      align-items: center;
+      margin-bottom: 40px;
+    }
+
+    .header i {
+      font-size: 2rem;
+      color: #43a047;
+      margin-right: 10px;
+    }
+
+    .header h1 {
+      font-family: 'Georgia', serif;
+      font-size: 2.5rem;
+      color: #2e7d32;
+      letter-spacing: 1px;
+    }
+
+    .card-container {
+      display: flex;
+      gap: 30px;
+    }
+
+    .role-card {
+      background-color: #c8e6c9;
+      border-radius: 15px;
+      padding: 30px 40px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      text-align: center;
+      transition: transform 0.3s ease;
+      cursor: pointer;
+    }
+
+    .role-card:hover {
+      transform: scale(1.05);
+    }
+
+    .role-card h2 {
+      margin: 0;
+      color: #2e7d32;
+      font-size: 1.5rem;
+    }
+
+    .role-card p {
+      color: #4b6e4b;
+      font-size: 0.9rem;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <i class="fas fa-shopping-cart"></i>
+    <h1>Fresh Cart</h1>
+  </div>
+
+  <div class="card-container">
+    <div class="role-card" onclick="selectRole('Distributor')">
+      <h2>Distributor</h2>
+      <p>Manage inventory, pricing & delivery</p>
+    </div>
+    <div class="role-card" onclick="selectRole('Shop Owner')">
+      <h2>Shop Owner</h2>
+      <p>Place bulk orders for your store</p>
+    </div>
+  </div>
+
+  <script>
+    function selectRole(role) {
+      localStorage.setItem("userType", role);
+      window.location.href = "signin.html";
+    }
+  </script>
+
+</body>
+</html>

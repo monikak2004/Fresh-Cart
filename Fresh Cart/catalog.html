@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Fresh Cart Catalog</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&display=swap" rel="stylesheet">
+
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(to right, #eafaf1, #f9fdf9);
+      color: #333;
+      margin: 0;
+      padding: 0;
+    }
+    header {
+      background: linear-gradient(to right, #66bb6a, #a5d6a7);
+      padding: 1.2rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+    header h1, .brand-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 2.2rem;
+  font-weight: 600;
+  color: #2e7d32;
+  margin: 0;
+  letter-spacing: 0.5px;
+}
+    .search-filter {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+    }
+    .search-filter input, .search-filter select {
+      padding: 0.6rem;
+      border: 1px solid #aed581;
+      border-radius: 0.5rem;
+      outline: none;
+    }
+    .catalog {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1.5rem;
+      padding: 2rem;
+    }
+    .product {
+      background: #ffffff;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+      padding: 1rem;
+      text-align: center;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .product:hover {
+      transform: scale(1.02);
+      box-shadow: 0 6px 16px rgba(76, 175, 80, 0.25);
+    }
+    .product img {
+      width: 100%;
+      height: 180px;
+      object-fit: cover;
+      border-radius: 1rem;
+      margin-bottom: 0.8rem;
+    }
+    .variant, .brand-select, .quantity {
+      margin: 0.6rem 0;
+    }
+    .add-cart {
+      background: #66bb6a;
+      color: white;
+      border: none;
+      padding: 0.6rem 1.2rem;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      font-weight: bold;
+      margin-top: 0.5rem;
+    }
+    .add-cart:hover {
+      background-color: #4caf50;
+    }
+    .cart-icon {
+      position: relative;
+      cursor: pointer;
+      font-size: 1.8rem;
+      color: white;
+    }
+    .cart-icon::after {
+      content: attr(data-count);
+      position: absolute;
+      top: -6px;
+      right: -10px;
+      background: red;
+      color: white;
+      border-radius: 50%;
+      padding: 2px 6px;
+      font-size: 0.7rem;
+    }
+    #cart-modal {
+      display: none;
+      position: fixed;
+      top: 12%;
+      right: 8%;
+      width: 320px;
+      background: #f1fff4;
+      border: 1px solid #ccc;
+      border-radius: 15px;
+      padding: 1rem;
+      box-shadow: 0 0 10px rgba(0,0,0,0.2);
+      z-index: 999;
+    }
+    #cart-modal ul {
+      list-style: none;
+      padding: 0;
+    }
+    #cart-modal li {
+      margin: 0.5rem 0;
+    }
+    .checkout {
+      background: #4caf50;
+      color: white;
+      padding: 0.5rem 1rem;
+      border: none;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      margin-top: 1rem;
+    }
+    .checkout:hover {
+      background-color: #388e3c;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Fresh Cart</h1>
+    <div class="search-filter">
+      <input type="text" id="searchBar" placeholder="Search products...">
+      <select id="categoryFilter" onchange="filterCatalog()">
+        <option value="all">All Categories</option>
+        <option value="fruits">Fruits</option>
+        <option value="vegetables">Vegetables</option>
+        <option value="bakery">Bakery</option>
+      </select>
+      <div class="cart-icon" onclick="toggleCart()" data-count="0">🛒</div>
+    </div>
+  </header>
+
+  <main class="catalog" id="catalog"></main>
+
+  <div id="cart-modal">
+    <h3>Your Cart</h3>
+    <ul id="cart-items"></ul>
+    <p>Total: ₹<span id="cart-total">0</span></p>
+    <button class="checkout" onclick="window.location.href='distributor.html'">Checkout</button>
+  </div>
+
+  <script>
+    const products = [
+      {
+        category: "fruits",
+        name: "Apple",
+        image: "image/apple.jpg",
+        variants: {
+          "Kashmiri": {
+            brands: [
+              { name: "FreshFarm", price: 120 },
+              { name: "Nature's Best", price: 130 }
+            ]
+          },
+          "Green": {
+            brands: [
+              { name: "GreenDelight", price: 110 },
+              { name: "HealthyHarvest", price: 115 }
+            ]
+          }
+        },
+        unit: "kg"
+      },
+      {
+        category: "fruits",
+        name: "Banana",
+        image: "image/banana.jpg",
+        variants: {
+          "Cavendish": {
+            brands: [
+              { name: "TropicalTaste", price: 40 },
+              { name: "BananaKing", price: 45 }
+            ]
+          },
+          "Red": {
+            brands: [
+              { name: "RedBananaCo", price: 50 },
+              { name: "ExoticFruits", price: 55 }
+            ]
+          }
+        },
+        unit: "kg"
+      },
+      {
+        category: "fruits",
+        name: "Orange",
+        image: "image/orange.jpg",
+        variants: {
+          "Mandarin": {
+            brands: [
+              { name: "CitrusWorld", price: 70 },
+              { name: "OrangeDelight", price: 75 }
+            ]
+          }
+        },
+        unit: "kg"
+      },
+      {
+        category: "vegetables",
+        name: "Carrot",
+        image: "image/carrot.jpeg",
+        variants: {
+          "Regular": {
+            brands: [
+              { name: "VeggieFarm", price: 30 },
+              { name: "FreshRoots", price: 35 }
+            ]
+          },
+          "Organic": {
+            brands: [
+              { name: "GreenHarvest", price: 40 },
+              { name: "PureVeg", price: 45 }
+            ]
+          }
+        },
+        unit: "kg"
+      },
+      {
+        category: "vegetables",
+        name: "Tomato",
+        image: "image/tomato.jpg",
+        variants: {
+          "Desi": {
+            brands: [
+              { name: "FreshHarvest", price: 28 },
+              { name: "VeggieNest", price: 30 }
+            ]
+          },
+          "Hybrid": {
+            brands: [
+              { name: "TomatoKing", price: 32 },
+              { name: "UrbanVeg", price: 34 }
+            ]
+          }
+        },
+        unit: "kg"
+      },
+      {
+        category: "vegetables",
+        name: "Spinach",
+        image: "image/spinach.jpg",
+        variants: {
+          "Regular": {
+            brands: [
+              { name: "GreenLeaf", price: 25 },
+              { name: "HealthyHarvest", price: 27 }
+            ]
+          },
+          "Baby": {
+            brands: [
+              { name: "LeafyLove", price: 30 },
+              { name: "PureVeg", price: 33 }
+            ]
+          }
+        },
+        unit: "bunch"
+      },
+      {
+        category: "bakery",
+        name: "Muffin",
+        image: "image/muffin.jpeg",
+        variants: {
+          "Blueberry": {
+            brands: [
+              { name: "BerryMuffin", price: 32 },
+              { name: "MorningBake", price: 36 }
+            ]
+          },
+          "Chocolate Chip": {
+            brands: [
+              { name: "ChocoBakes", price: 35 },
+              { name: "MuffinTime", price: 38 }
+            ]
+          }
+        },
+        unit: "each"
+      },
+      {
+        category: "bakery",
+        name: "Croissant",
+        image: "image/croissant.jpg",
+        variants: {
+          "Butter": {
+            brands: [
+              { name: "ParisBake", price: 45 },
+              { name: "MorningFlake", price: 48 }
+            ]
+          },
+          "Chocolate": {
+            brands: [
+              { name: "ChocoFluff", price: 50 },
+              { name: "DelightBake", price: 52 }
+            ]
+          }
+        },
+        unit: "each"
+      }
+    ];
+
+    let cart = [];
+
+    function displayCatalog(filtered = products) {
+      const catalog = document.getElementById('catalog');
+      catalog.innerHTML = '';
+      filtered.forEach(product => {
+        const productDiv = document.createElement('div');
+        productDiv.classList.add('product');
+        productDiv.innerHTML = `
+          <img src="${product.image}" alt="${product.name}">
+          <h3>${product.name}</h3>
+          <div class="variant">
+            <label>Variant:</label>
+            <select class="variant-select" id="variant-select-${product.name}">
+              ${Object.keys(product.variants).map(variant => `<option value="${variant}">${variant}</option>`).join('')}
+            </select>
+          </div>
+          <div class="brand-select">
+            <label>Brand:</label>
+            <select class="brand-select" id="brand-select-${product.name}"></select>
+          </div>
+          <div class="quantity">
+            <label>Quantity:</label>
+            <input type="number" id="quantity-${product.name}" value="1" min="1" />
+          </div>
+          <button class="add-cart" onclick="addToCart('${product.name}')">Add to Cart</button>
+        `;
+        catalog.appendChild(productDiv);
+
+        const variantSelect = document.getElementById(`variant-select-${product.name}`);
+        const brandSelect = document.getElementById(`brand-select-${product.name}`);
+
+        function updateBrands() {
+          const selectedVariant = variantSelect.value;
+          brandSelect.innerHTML = '';
+          product.variants[selectedVariant].brands.forEach(brand => {
+            const option = document.createElement('option');
+            option.value = brand.name;
+            option.textContent = `${brand.name} - ₹${brand.price}`;
+            brandSelect.appendChild(option);
+          });
+        }
+
+        variantSelect.addEventListener('change', updateBrands);
+        updateBrands(); // initial
+      });
+    }
+
+    function filterCatalog() {
+      const selectedCategory = document.getElementById('categoryFilter').value;
+      const query = document.getElementById('searchBar').value.toLowerCase();
+
+      const filtered = products.filter(p => {
+        const matchCategory = selectedCategory === 'all' || p.category === selectedCategory;
+        const matchSearch = p.name.toLowerCase().includes(query);
+        return matchCategory && matchSearch;
+      });
+
+      displayCatalog(filtered);
+    }
+
+    document.getElementById('searchBar').addEventListener('input', filterCatalog);
+
+    function addToCart(productName) {
+      const product = products.find(p => p.name === productName);
+      const variant = document.getElementById(`variant-select-${productName}`).value;
+      const brand = document.getElementById(`brand-select-${productName}`).value;
+      const quantity = parseInt(document.getElementById(`quantity-${productName}`).value);
+      const price = product.variants[variant].brands.find(b => b.name === brand).price;
+
+      cart.push({ name: productName, variant, brand, price, quantity });
+      updateCart();
+    }
+
+    function updateCart() {
+      const cartItems = document.getElementById('cart-items');
+      const cartTotal = document.getElementById('cart-total');
+      cartItems.innerHTML = '';
+      let total = 0;
+
+      cart.forEach(item => {
+        const listItem = document.createElement('li');
+        listItem.textContent = `${item.name} (${item.variant} - ${item.brand}): ₹${item.price} x ${item.quantity}`;
+        cartItems.appendChild(listItem);
+        total += item.price * item.quantity;
+      });
+
+      cartTotal.textContent = total;
+      document.querySelector('.cart-icon').setAttribute('data-count', cart.length);
+    }
+
+    function toggleCart() {
+      const cartModal = document.getElementById('cart-modal');
+      cartModal.style.display = cartModal.style.display === 'block' ? 'none' : 'block';
+    }
+
+    displayCatalog();
+  </script>
+</body>
+</html>
+

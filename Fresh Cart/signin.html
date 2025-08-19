@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Sign In</title>
+  <!-- Firebase scripts -->
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+  <style>
+    body {
+      background-color: #f1f8e9;
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+    .login-box {
+      background: #c8e6c9;
+      padding: 40px;
+      border-radius: 20px;
+      text-align: center;
+      width: 350px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    }
+    h2 {
+      color: #2e7d32;
+    }
+    input, button {
+      margin-top: 15px;
+      padding: 12px;
+      width: 100%;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+    }
+    button {
+      background-color: #388e3c;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #2e7d32;
+    }
+    #phone-login, #email-login {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="login-box">
+    <h2>Sign in as <span id="roleDisplay">...</span></h2>
+
+    <button onclick="showPhoneLogin()">Sign in with Phone</button>
+    <button onclick="showEmailLogin()">Sign in with Email</button>
+
+    <div id="phone-login">
+      <input type="text" id="phoneNumber" placeholder="Enter phone number (e.g. +911234567890)" />
+      <div id="recaptcha-container"></div>
+      <button onclick="sendOTP()">Send OTP</button>
+
+      <div id="otp-section" style="display: none;">
+        <input type="text" id="otpCode" placeholder="Enter OTP" />
+        <button onclick="verifyOTP()">Verify OTP</button>
+      </div>
+    </div>
+
+    <div id="email-login">
+      <input type="email" id="email" placeholder="Enter your email" />
+      <input type="password" id="password" placeholder="Enter your password" />
+      <button onclick="emailLogin()">Sign In</button>
+    </div>
+  </div>
+
+  <script>
+    // Firebase config
+    const firebaseConfig = {
+      apiKey: "AIzaSyDPqV8h0TXxgtvTSTrVTEiAyXxJJ5DK6IU",
+      authDomain: "fresh-cart-97c59.firebaseapp.com",
+      databaseURL: "https://fresh-cart-97c59-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "fresh-cart-97c59",
+      storageBucket: "fresh-cart-97c59.appspot.com",
+      messagingSenderId: "869986920608",
+      appId: "1:869986920608:web:aa8486a2f70b15c3f241c5",
+      measurementId: "G-CFFH8Q6PCE"
+    };
+
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const database = firebase.database();
+
+    const role = localStorage.getItem("userType") || "User";
+    document.getElementById("roleDisplay").textContent = role;
+
+    // reCAPTCHA
+    window.recaptchaVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-container', {
+      size: 'invisible'
+    });
+
+    // Save user info to DB
+    function saveUserToDatabase(user) {
+      const uid = user.uid;
+      database.ref("users/" + uid).set({
+        uid: uid,
+        email: user.email || null,
+        phone: user.phoneNumber || null,
+        role: role,
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    // Phone auth
+    let confirmationResult;
+
+    window.showPhoneLogin = () => {
+      document.getElementById("phone-login").style.display = "block";
+      document.getElementById("email-login").style.display = "none";
+    };
+
+    window.showEmailLogin = () => {
+      document.getElementById("email-login").style.display = "block";
+      document.getElementById("phone-login").style.display = "none";
+    };
+
+    window.sendOTP = () => {
+      const phone = document.getElementById("phoneNumber").value;
+      if (!phone) {
+        alert("Please enter a phone number.");
+        return;
+      }
+
+      auth.signInWithPhoneNumber(phone, window.recaptchaVerifier)
+        .then(result => {
+          confirmationResult = result;
+          document.getElementById("otp-section").style.display = "block";
+        })
+        .catch(error => {
+          console.error(error);
+          alert("Failed to send OTP: " + error.message);
+        });
+    };
+
+    window.verifyOTP = () => {
+      const code = document.getElementById("otpCode").value;
+      if (!code) {
+        alert("Please enter the OTP.");
+        return;
+      }
+
+      confirmationResult.confirm(code)
+        .then(userCredential => {
+          const user = userCredential.user;
+          saveUserToDatabase(user);
+          alert("Phone login successful!");
+          window.location.href = role === "Distributor" ? "distributorhomepage.html" : "catalog.html";
+        })
+        .catch(error => {
+          console.error(error);
+          alert("OTP verification failed: " + error.message);
+        });
+    };
+
+    window.emailLogin = () => {
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+
+      if (!email || !password) {
+        alert("Please enter email and password.");
+        return;
+      }
+
+      auth.signInWithEmailAndPassword(email, password)
+        .then(userCredential => {
+          const user = userCredential.user;
+          saveUserToDatabase(user);
+          alert("Email login successful!");
+          window.location.href = role === "Distributor" ? "distributorhomepage.html" : "catalog.html";
+        })
+        .catch(error => {
+          if (error.code === 'auth/user-not-found') {
+            // Register new user
+            auth.createUserWithEmailAndPassword(email, password)
+              .then(userCredential => {
+                const user = userCredential.user;
+                saveUserToDatabase(user);
+                alert("Account created and logged in!");
+                window.location.href = role === "Distributor" ? "distributorhomepage.html" : "catalog.html";
+              })
+              .catch(err => alert("Registration failed: " + err.message));
+          } else {
+            alert("Login failed: " + error.message);
+          }
+        });
+    };
+  </script>
+</body>
+</html>
