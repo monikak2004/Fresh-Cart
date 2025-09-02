@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fresh Cart - Login</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-auth.js"></script>
+    <style>
+        /* --- General Styles & Variables --- */
+        :root {
+            --primary-dark: #333333;
+            --secondary-light: #f5f5f5;
+            --card-bg: #ffffff;
+            --text-dark: #222222;
+            --text-light: #555555;
+            --border-color: #dddddd;
+            --font-heading: 'Montserrat', sans-serif;
+            --font-body: 'Roboto', sans-serif;
+            --delete-color: #dc3545;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-body);
+            color: var(--text-dark);
+            line-height: 1.6;
+            background-color: var(--secondary-light);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        h1, h2, h3, h4 {
+            font-family: var(--font-heading);
+        }
+
+        /* --- Login Form Container --- */
+        .login-box {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            padding: 2.5rem 2rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        .login-box h1 {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .login-box p {
+            font-size: 0.9rem;
+            margin-bottom: 1.5rem;
+            color: var(--text-light);
+        }
+
+        /* --- Form Styling --- */
+        .form-group {
+            margin-bottom: 1rem;
+            text-align: left;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-family: inherit;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: var(--primary-dark);
+        }
+
+        .btn-primary {
+            width: 100%;
+            padding: 0.75rem;
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--card-bg);
+            background-color: var(--primary-dark);
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .btn-primary:hover {
+            background-color: #555555;
+        }
+
+        .form-error {
+            color: var(--delete-color);
+            font-size: 0.8rem;
+            margin-top: -0.5rem;
+            margin-bottom: 1rem;
+            text-align: left;
+        }
+        
+        .toggle-options {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 1rem;
+            font-size: 0.9rem;
+        }
+
+        .toggle-options a {
+            color: var(--text-light);
+            text-decoration: none;
+        }
+
+        .toggle-options a:hover {
+            text-decoration: underline;
+        }
+        
+        .role-selector {
+            display: none;
+        }
+    </style>
+</head>
+<body class="login-page">
+    <main class="container">
+        <div class="login-box">
+            <h1 id="page-title">Login</h1>
+            <p id="page-subtitle">Please enter your credentials to continue.</p>
+
+            <form id="auth-form">
+                <div class="form-group">
+                    <label for="name" id="name-label" class="hidden">Name</label>
+                    <input type="text" id="name" class="hidden">
+                </div>
+                
+                <div id="email-login-form">
+                    <div class="form-group">
+                        <label for="email">Email</label>
+                        <input type="email" id="email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <input type="password" id="password" required>
+                    </div>
+                </div>
+
+                <div class="form-group role-selector" id="role-select-group">
+                    <label for="role-select">Select Role</label>
+                    <select id="role-select">
+                        <option value="shopowner">Shopowner</option>
+                        <option value="distributor">Distributor</option>
+                    </select>
+                </div>
+                
+                <div class="form-error" id="error-message"></div>
+                <button type="submit" class="btn-primary" id="main-btn">Sign In</button>
+            </form>
+
+            <div class="toggle-options">
+                <a href="#" id="forgot-password">Forgot Password?</a>
+                <a href="#" id="toggle-auth">Sign Up</a>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // --- Firebase Configuration ---
+    // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: "AIzaSyBfd1xI1xwlMMhnw-Gc3lhXQWve-rec3MY",
+  authDomain: "fresh-cartt-aee18.firebaseapp.com",
+  projectId: "fresh-cartt-aee18",
+  storageBucket: "fresh-cartt-aee18.firebasestorage.app",
+  messagingSenderId: "207738294484",
+  appId: "1:207738294484:web:c0159362f09ffd1291ab41",
+  measurementId: "G-LDYNKERMWQ"
+};
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const params = new URLSearchParams(window.location.search);
+            let userRole = params.get('role');
+            let isSignIn = true;
+
+            const pageTitle = document.getElementById('page-title');
+            const pageSubtitle = document.getElementById('page-subtitle');
+            const authForm = document.getElementById('auth-form');
+            const nameInput = document.getElementById('name');
+            const nameLabel = document.getElementById('name-label');
+            const emailInput = document.getElementById('email');
+            const passwordInput = document.getElementById('password');
+            const roleSelectGroup = document.getElementById('role-select-group');
+            const mainBtn = document.getElementById('main-btn');
+            const forgotPasswordLink = document.getElementById('forgot-password');
+            const toggleAuthLink = document.getElementById('toggle-auth');
+            const errorMessage = document.getElementById('error-message');
+
+            function updateUI() {
+                errorMessage.textContent = '';
+                if (isSignIn) {
+                    pageTitle.textContent = userRole === 'distributor' ? 'Distributor Login' : 'Shopowner Login';
+                    pageSubtitle.textContent = 'Please enter your credentials to continue.';
+                    nameInput.classList.add('hidden');
+                    nameLabel.classList.add('hidden');
+                    roleSelectGroup.style.display = 'none';
+                    mainBtn.textContent = 'Sign In';
+                    toggleAuthLink.textContent = 'Sign Up';
+                    forgotPasswordLink.style.display = 'block';
+                } else {
+                    pageTitle.textContent = 'Create an Account';
+                    pageSubtitle.textContent = 'Fill in your details to get started.';
+                    nameInput.classList.remove('hidden');
+                    nameLabel.classList.remove('hidden');
+                    roleSelectGroup.style.display = 'block';
+                    mainBtn.textContent = 'Register';
+                    toggleAuthLink.textContent = 'Sign In';
+                    forgotPasswordLink.style.display = 'none';
+                }
+            }
+            
+            toggleAuthLink.addEventListener('click', (e) => {
+                e.preventDefault();
+                isSignIn = !isSignIn;
+                updateUI();
+            });
+
+            authForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                errorMessage.textContent = '';
+                
+                const email = emailInput.value;
+                const password = passwordInput.value;
+                if (isSignIn) {
+                    try {
+                        const userCredential = await auth.signInWithEmailAndPassword(email, password);
+                        console.log('User signed in:', userCredential.user);
+                        if (userRole === 'shopowner') {
+                            window.location.href = 'shopowner/shopowner-dashboard.html';
+                        } else if (userRole === 'distributor') {
+                            window.location.href = 'distributor-dashboard.html';
+                        }
+                    } catch (error) {
+                        if (error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential') {
+                            errorMessage.textContent = 'Incorrect email or password. Please try again.';
+                    
+                        }
+                        console.error('Login failed:', error);
+                    }
+                } else { // Registration
+                    try {
+                        await auth.createUserWithEmailAndPassword(email, password);
+                        alert('Registration successful! Please sign in with your new account.');
+                        isSignIn = true;
+                        updateUI();
+                    } catch (error) {
+                        errorMessage.textContent = `Registration failed: ${error.message}`;
+                        console.error('Registration failed:', error);
+                    }
+                }
+            });
+
+            forgotPasswordLink.addEventListener('click', async (e) => {
+                e.preventDefault();
+                const email = emailInput.value;
+                if (!email) {
+                    errorMessage.textContent = 'Please enter your email to reset your password.';
+                    return;
+                }
+                try {
+                    await auth.sendPasswordResetEmail(email);
+                    errorMessage.textContent = 'Password reset email sent. Check your inbox.';
+                } catch (error) {
+                    errorMessage.textContent = `Failed to send reset email: ${error.message}`;
+                    console.error('Password reset failed:', error);
+                }
+            });
+
+            updateUI();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fresh Cart - Shopowner Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        /* --- Global Styles & Variables --- */
+        :root {
+            --primary-dark: #333333;
+            --secondary-light: #f5f5f5;
+            --card-bg: #ffffff;
+            --text-dark: #222222;
+            --text-light: #555555;
+            --border-color: #dddddd;
+            --font-heading: 'Montserrat', sans-serif;
+            --font-body: 'Roboto', sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-body);
+            color: var(--text-dark);
+            line-height: 1.6;
+            background-color: var(--secondary-light);
+            display: flex;
+        }
+
+        h1, h2, h3, h4 {
+            font-family: var(--font-heading);
+        }
+
+        .dashboard-wrapper {
+            display: flex;
+            min-height: 100vh;
+            width: 100%;
+        }
+
+        /* --- Sidebar Navigation --- */
+        .sidebar {
+            width: 250px;
+            background-color: var(--primary-dark);
+            height: 100vh;
+            position: fixed;
+            top: 0;
+            left: -250px;
+            transition: left 0.3s ease-in-out;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+        }
+
+        .sidebar.active {
+            left: 0;
+        }
+
+        .logo {
+            padding: 2rem 1rem;
+            text-align: center;
+            color: var(--secondary-light);
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        .main-nav {
+            list-style: none;
+            padding: 0;
+            flex-grow: 1;
+        }
+
+        .main-nav ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .nav-item a {
+            display: block;
+            padding: 1rem 2rem;
+            color: var(--secondary-light);
+            text-decoration: none;
+            transition: background-color 0.2s;
+            font-weight: 500;
+        }
+
+        .nav-item a.active,
+        .nav-item a:hover {
+            background-color: #555555;
+        }
+
+        .logout-btn {
+            width: 100%;
+            padding: 1rem;
+            background-color: #e0e0e0;
+            color: var(--text-dark);
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            transition: background-color 0.2s;
+        }
+
+        .logout-btn:hover {
+            background-color: #cccccc;
+        }
+
+        /* --- Hamburger Menu & Header --- */
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 1rem 2rem;
+            background-color: var(--card-bg);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            z-index: 1001;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .hamburger-btn {
+            font-size: 2rem;
+            cursor: pointer;
+            color: var(--primary-dark);
+            background: none;
+            border: none;
+            display: block;
+            position: absolute;
+            left: 1rem;
+        }
+
+        .header-logo {
+            font-family: var(--font-heading);
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--primary-dark);
+            text-decoration: none;
+            margin-left: 2rem;
+        }
+
+        .header-controls {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+        
+        .header-controls-link {
+            font-size: 1.5rem;
+            color: var(--primary-dark);
+            text-decoration: none;
+            position: relative;
+        }
+
+        /* --- Main Content Area --- */
+        .main-content {
+            padding: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding-top: 6rem;
+            width: 100%;
+        }
+
+        .page-title {
+            color: var(--primary-dark);
+            margin-bottom: 2rem;
+        }
+
+        /* --- Dashboard Page Styles --- */
+        .summary-cards-shopowner {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .summary-card {
+            background-color: var(--card-bg);
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .summary-card h3 {
+            font-size: 1rem;
+            color: var(--text-light);
+            margin-bottom: 0.5rem;
+        }
+
+        .summary-card p {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary-dark);
+        }
+
+        .analytics-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .analytics-card {
+            background-color: var(--card-bg);
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .analytics-card h3 {
+            margin-bottom: 1rem;
+            color: var(--text-dark);
+        }
+
+        .analytics-placeholder {
+            height: 200px;
+            background-color: var(--secondary-light);
+            border-radius: 8px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: var(--text-light);
+            font-style: italic;
+        }
+        
+        .notification-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            border-bottom: 1px dashed var(--border-color);
+        }
+        
+        .notification-item:last-child {
+            border-bottom: none;
+        }
+        
+        .notification-icon {
+            font-size: 1.5rem;
+            color: var(--primary-dark);
+        }
+
+        .quick-actions-panel {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .quick-action-card {
+            background-color: var(--card-bg);
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            transition: transform 0.2s;
+            cursor: pointer;
+        }
+
+        .quick-action-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .quick-action-card h3 {
+            color: var(--primary-dark);
+            font-size: 1.2rem;
+        }
+
+        /* --- Responsive Design --- */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 100%;
+                left: -100%;
+            }
+            .sidebar.active {
+                left: 0;
+            }
+            .main-content {
+                padding: 1rem;
+                padding-top: 5rem;
+                margin-left: 0;
+            }
+            .sidebar.active ~ .main-content {
+                margin-left: 0;
+            }
+        }
+    </style>
+</head>
+<body class="dashboard-page">
+    <div class="dashboard-wrapper">
+        <aside class="sidebar" id="sidebar">
+            <div class="logo">Fresh Cart</div>
+            <nav class="main-nav">
+                <ul>
+                    <li class="nav-item active"><a href="shopowner-dashboard.html">Dashboard</a></li>
+                    <li class="nav-item"><a href="shopowner-catalog.html">Catalog</a></li>
+                    <li class="nav-item"><a href="shopowner-orders.html">Orders</a></li>
+                    <li class="nav-item"><a href="shopowner-payments.html">Payments</a></li>
+                    <li class="nav-item"><a href="shopowner-profile.html">Profile</a></li>
+                </ul>
+            </nav>
+            <button class="logout-btn">Log Out</button>
+        </aside>
+
+        <header class="header">
+            <button class="hamburger-btn" id="hamburger-btn">☰</button>
+            <a href="#" class="header-logo">Fresh Cart</a>
+            <div class="header-controls">
+                <a href="shopowner-cart.html" class="header-controls-link" id="cart-icon-btn">
+                    🛒
+                    <span class="cart-count">0</span>
+                </a>
+            </div>
+        </header>
+
+        <main class="main-content">
+            <h1 class="page-title">Shopowner Dashboard</h1>
+            
+            <div class="summary-cards-shopowner" id="summary-cards">
+                </div>
+
+            <h2 style="font-family: var(--font-body); font-weight: 500; margin-bottom: 1rem;">Order Status Snapshot</h2>
+            <div class="analytics-section">
+                <div class="analytics-card">
+                    <h3>Current Orders</h3>
+                    <div class="analytics-placeholder">Pie chart of order statuses would go here</div>
+                </div>
+                <div class="analytics-card">
+                    <h3>Notifications</h3>
+                    <div id="notifications-list"></div>
+                </div>
+            </div>
+
+            <h2 style="font-family: var(--font-body); font-weight: 500; margin-bottom: 1rem;">Quick Actions</h2>
+            <div class="quick-actions-panel" id="quick-actions-panel">
+                </div>
+        </main>
+    </div>
+
+    <script>
+        const shopownerData = {
+            profile: {
+                name: "Jane Smith",
+                email: "jane.smith@freshcart.com",
+            },
+            orders: [
+                { id: 1, status: 'shipped' },
+                { id: 2, status: 'pending' },
+                { id: 3, status: 'delivered' },
+                { id: 4, status: 'shipped' },
+            ],
+            payments: [
+                { id: 1, status: 'paid', amount: 500 },
+                { id: 2, status: 'pending', amount: 1200 },
+                { id: 3, status: 'paid', amount: 800 },
+            ],
+            distributors: [
+                { name: 'AgriCorp' },
+                { name: 'FreshFarm' },
+                { name: 'TheGrainery' },
+            ],
+            notifications: [
+                { type: 'new_order', message: 'Order #456 is ready for checkout.' },
+                { type: 'low_stock', message: 'AgriCorp has a special on Fresh Tomatoes!' },
+                { type: 'new_offer', message: 'A new distributor has joined Fresh Cart.' },
+            ]
+        };
+        
+        let cart = [];
+
+        const sidebar = document.getElementById('sidebar');
+        const hamburgerBtn = document.getElementById('hamburger-btn');
+        const navLinks = document.querySelectorAll('.nav-item a');
+        const logoutBtn = document.querySelector('.logout-btn');
+        const summaryCardsContainer = document.getElementById('summary-cards');
+        const quickActionsPanel = document.getElementById('quick-actions-panel');
+        const notificationsList = document.getElementById('notifications-list');
+        const cartCountSpan = document.querySelector('.cart-count');
+
+        function renderDashboard() {
+            const distributorsCount = shopownerData.distributors.length;
+            const activeOrdersCount = shopownerData.orders.filter(o => o.status !== 'delivered').length;
+            const pendingPaymentsCount = shopownerData.payments.filter(p => p.status === 'pending').length;
+            const deliveredOrdersCount = shopownerData.orders.filter(o => o.status === 'delivered').length;
+
+            summaryCardsContainer.innerHTML = `
+                <div class="summary-card">
+                    <h3>Available Distributors</h3>
+                    <p>${distributorsCount}</p>
+                </div>
+                <div class="summary-card">
+                    <h3>Active Orders</h3>
+                    <p>${activeOrdersCount}</p>
+                </div>
+                <div class="summary-card">
+                    <h3>Pending Payments</h3>
+                    <p>${pendingPaymentsCount}</p>
+                </div>
+                <div class="summary-card">
+                    <h3>Delivered Orders</h3>
+                    <p>${deliveredOrdersCount}</p>
+                </div>
+            `;
+            
+            notificationsList.innerHTML = shopownerData.notifications.map(n => `
+                <div class="notification-item">
+                    <span class="notification-icon">🔔</span>
+                    <p>${n.message}</p>
+                </div>
+            `).join('');
+
+            quickActionsPanel.innerHTML = `
+                <div class="quick-action-card" onclick="window.location.href='shopowner-catalog.html'">
+                    <h3>Go to Catalog</h3>
+                </div>
+                <div class="quick-action-card" onclick="window.location.href='shopowner-orders.html'">
+                    <h3>Track My Orders</h3>
+                </div>
+                <div class="quick-action-card" onclick="window.location.href='shopowner-profile.html'">
+                    <h3>Update Profile</h3>
+                </div>
+            `;
+        }
+        
+        hamburgerBtn.addEventListener('click', () => {
+            sidebar.classList.toggle('active');
+        });
+
+        navLinks.forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const pageHref = e.target.href;
+                window.location.href = pageHref;
+            });
+        });
+
+        logoutBtn.addEventListener('click', () => {
+            alert('Logging out...');
+            window.location.href = 'fresh-cart-home.html';
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            renderDashboard();
+        });
+    </script>
+</body>
+</html>

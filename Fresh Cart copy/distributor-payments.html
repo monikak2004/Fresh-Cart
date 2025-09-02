@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fresh Cart - Distributor Payments</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        /* --- General Styles & Variables --- */
+        :root {
+            --primary-dark: #333333;
+            --secondary-light: #f5f5f5;
+            --card-bg: #ffffff;
+            --text-dark: #222222;
+            --text-light: #555555;
+            --border-color: #dddddd;
+            --font-heading: 'Montserrat', sans-serif;
+            --font-body: 'Roboto', sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-body);
+            color: var(--text-dark);
+            line-height: 1.6;
+            background-color: var(--secondary-light);
+            display: flex;
+        }
+
+        h1, h2, h3, h4 {
+            font-family: var(--font-heading);
+        }
+
+        .dashboard-wrapper {
+            display: flex;
+            min-height: 100vh;
+            width: 100%;
+        }
+
+        /* --- Sidebar Navigation --- */
+        .sidebar {
+            width: 250px;
+            background-color: var(--primary-dark);
+            height: 100vh;
+            position: fixed;
+            top: 0;
+            left: -250px;
+            transition: left 0.3s ease-in-out;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+        }
+
+        .sidebar.active {
+            left: 0;
+        }
+
+        .logo {
+            padding: 2rem 1rem;
+            text-align: center;
+            color: var(--secondary-light);
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        .main-nav {
+            list-style: none;
+            padding: 0;
+            flex-grow: 1;
+        }
+
+        .main-nav ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .nav-item a {
+            display: block;
+            padding: 1rem 2rem;
+            color: var(--secondary-light);
+            text-decoration: none;
+            transition: background-color 0.2s;
+            font-weight: 500;
+        }
+
+        .nav-item a.active,
+        .nav-item a:hover {
+            background-color: #555555;
+        }
+
+        .logout-btn {
+            width: 100%;
+            padding: 1rem;
+            background-color: #e0e0e0;
+            color: var(--text-dark);
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            transition: background-color 0.2s;
+        }
+
+        .logout-btn:hover {
+            background-color: #cccccc;
+        }
+
+        /* --- Hamburger Menu & Header --- */
+        .dashboard-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 1rem;
+            background-color: var(--card-bg);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            z-index: 1001;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .hamburger-btn {
+            font-size: 2rem;
+            cursor: pointer;
+            color: var(--primary-dark);
+            background: none;
+            border: none;
+            display: block;
+        }
+        
+        .header-title {
+            font-size: 1.5rem;
+            color: var(--primary-dark);
+        }
+
+        /* --- Main Content Area --- */
+        .content-area {
+            flex-grow: 1;
+            padding: 2rem;
+            padding-top: 6rem;
+            transition: margin-left 0.3s ease-in-out;
+        }
+
+        .sidebar.active ~ .content-area {
+            margin-left: 250px;
+        }
+
+        .page-title {
+            color: var(--primary-dark);
+            margin-bottom: 2rem;
+        }
+
+        /* --- Payments Page Layout --- */
+        .summary-cards-payments {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .summary-card {
+            background-color: var(--card-bg);
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+        
+        .summary-card h3 {
+            font-size: 1rem;
+            color: var(--text-light);
+            margin-bottom: 0.5rem;
+        }
+        
+        .summary-card p {
+            font-size: 2rem;
+            font-weight: 700;
+        }
+        
+        .total-collected { color: #28a745; }
+        .pending-payments { color: #e65100; }
+        .awaiting-delivery { color: #007bff; }
+        .failed-refunded { color: #dc3545; }
+        
+        .payments-list-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+        
+        .payment-card {
+            background-color: var(--card-bg);
+            padding: 1.5rem;
+            border-radius: 16px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        
+        .payment-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+        }
+
+        .payment-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .payment-card-header h3 {
+            font-size: 1.1rem;
+            color: var(--text-dark);
+            margin: 0;
+        }
+        
+        .payment-card-header .payment-status {
+            padding: 0.25rem 0.75rem;
+            border-radius: 6px;
+            font-weight: 600;
+            text-transform: capitalize;
+            font-size: 0.9rem;
+        }
+        
+        .payment-card-header .status-pending { background-color: #fff3e0; color: #e65100; }
+        .payment-card-header .status-paid { background-color: #e8f5e9; color: #2e7d32; }
+        
+        .payment-details {
+            font-size: 0.9rem;
+            color: var(--text-light);
+        }
+
+        .payment-details strong {
+            color: var(--text-dark);
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1rem;
+            justify-content: flex-end;
+        }
+        
+        .action-buttons .btn {
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            color: var(--white);
+            border: none;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background-color 0.2s;
+        }
+
+        .btn-view { background-color: #007bff; }
+        .btn-mark-paid { background-color: #28a745; }
+        .btn-refund { background-color: #dc3545; }
+        
+        /* --- Responsive Design --- */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 100%;
+                left: -100%;
+            }
+            .sidebar.active {
+                left: 0;
+            }
+            .content-area {
+                padding: 1rem;
+                padding-top: 5rem;
+                margin-left: 0;
+            }
+            .sidebar.active ~ .content-area {
+                margin-left: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-wrapper">
+        <aside class="sidebar" id="sidebar">
+            <div class="logo">Fresh Cart</div>
+            <nav class="main-nav">
+                <ul>
+                    <li class="nav-item"><a href="distributor-dashboard.html">Dashboard</a></li>
+                    <li class="nav-item"><a href="distributor-orders.html">Orders</a></li>
+                    <li class="nav-item"><a href="distributor-products.html">Products</a></li>
+                    <li class="nav-item active"><a href="distributor-payments.html">Payments</a></li>
+                    <li class="nav-item"><a href="distributor-profile.html">Profile</a></li>
+                </ul>
+            </nav>
+            <button class="logout-btn">Log Out</button>
+        </aside>
+
+        <header class="dashboard-header">
+            <button class="hamburger-btn" id="hamburger-btn">☰</button>
+            <div class="header-title">Fresh Cart</div>
+        </header>
+
+        <main class="content-area">
+            <h1 class="page-title">Payments</h1>
+            
+            <div class="summary-cards-payments" id="summary-cards">
+                </div>
+
+            <div class="payments-list-container" id="payments-list">
+                </div>
+        </main>
+    </div>
+
+    <script>
+        // --- Dummy Data ---
+        let payments = [
+            { id: 4001, orderId: 1001, shopkeeper: 'GreenMart', amount: 4200, method: 'UPI', date: '2025-08-20', status: 'PENDING' },
+            { id: 4002, orderId: 1002, shopkeeper: 'Fresh Foods', amount: 1200, method: 'Card', date: '2025-08-21', status: 'PAID' },
+            { id: 4003, orderId: 1003, shopkeeper: 'Nature\'s Basket', amount: 3500, method: 'Cash', date: '2025-08-22', status: 'PAID' },
+            { id: 4004, orderId: 1004, shopkeeper: 'Daily Needs', amount: 2600, method: 'UPI', date: '2025-08-22', status: 'PENDING' },
+            { id: 4005, orderId: 1005, shopkeeper: 'HealthyMart', amount: 1500, method: 'Card', date: '2025-08-23', status: 'PAID' },
+            { id: 4006, orderId: 1006, shopkeeper: 'City Supermarket', amount: 9800, method: 'Cash', date: '2025-08-23', status: 'PAID' },
+            { id: 4007, orderId: 1007, shopkeeper: 'Farm Fresh', amount: 9800, method: 'UPI', date: '2025-08-23', status: 'PENDING' },
+            { id: 4008, orderId: 1008, shopkeeper: 'QuickMart', amount: 1500, method: 'Cash', date: '2025-08-24', status: 'PAID' },
+            { id: 4009, orderId: 1009, shopkeeper: 'Organic Hub', amount: 550, method: 'UPI', date: '2025-08-25', status: 'REFUNDED' },
+            { id: 4010, orderId: 1010, shopkeeper: 'The Food Spot', amount: 980, method: 'Card', date: '2025-08-26', status: 'FAILED' },
+        ];
+        
+        let orders = [
+            // Dummy orders array to check status for payments
+            {id: 1001, shopkeeper: 'GreenMart', status: 'pending'},
+            {id: 1002, shopkeeper: 'Fresh Foods', status: 'shipped'},
+            {id: 1003, shopkeeper: 'Nature\'s Basket', status: 'delivered'},
+            {id: 1004, shopkeeper: 'Daily Needs', status: 'pending'},
+            {id: 1005, shopkeeper: 'HealthyMart', status: 'delivered'},
+            {id: 1006, shopkeeper: 'City Supermarket', status: 'delivered'},
+            {id: 1007, shopkeeper: 'Farm Fresh', status: 'pending'},
+            {id: 1008, shopkeeper: 'QuickMart', status: 'delivered'},
+            {id: 1009, shopkeeper: 'Organic Hub', status: 'delivered'},
+            {id: 1010, shopkeeper: 'The Food Spot', status: 'pending'},
+        ];
+
+        // --- DOM Elements ---
+        const sidebar = document.getElementById('sidebar');
+        const hamburgerBtn = document.getElementById('hamburger-btn');
+        const navLinks = document.querySelectorAll('.nav-item a');
+        const logoutBtn = document.querySelector('.logout-btn');
+        const summaryCardsContainer = document.getElementById('summary-cards');
+        const paymentsListContainer = document.getElementById('payments-list');
+
+        // --- Core Functions ---
+        function renderPaymentsPage() {
+            renderSummaryCards();
+            renderPaymentCards();
+        }
+
+        function renderSummaryCards() {
+            const pendingTotal = payments.filter(p => p.status === 'PENDING').reduce((sum, p) => sum + p.amount, 0);
+            const paidButAwaitingDeliveryTotal = payments.filter(p => p.status === 'PAID' && orders.find(o => o.id === p.orderId && o.status !== 'delivered')).reduce((sum, p) => sum + p.amount, 0);
+            const totalCollected = payments.filter(p => p.status === 'PAID' && orders.find(o => o.id === p.orderId && o.status === 'delivered')).reduce((sum, p) => sum + p.amount, 0);
+            const failedRefundedTotal = payments.filter(p => p.status === 'FAILED' || p.status === 'REFUNDED').reduce((sum, p) => sum + p.amount, 0);
+
+            summaryCardsContainer.innerHTML = `
+                <div class="summary-card">
+                    <h3>Pending Payments</h3>
+                    <p class="pending-payments">₹${pendingTotal.toFixed(2)}</p>
+                </div>
+                <div class="summary-card">
+                    <h3>Paid - Awaiting Delivery</h3>
+                    <p class="awaiting-delivery">₹${paidButAwaitingDeliveryTotal.toFixed(2)}</p>
+                </div>
+                <div class="summary-card">
+                    <h3>Total Collected</h3>
+                    <p class="total-collected">₹${totalCollected.toFixed(2)}</p>
+                </div>
+                <div class="summary-card">
+                    <h3>Failed / Refunded</h3>
+                    <p class="failed-refunded">₹${failedRefundedTotal.toFixed(2)}</p>
+                </div>
+            `;
+        }
+
+        function renderPaymentCards() {
+            paymentsListContainer.innerHTML = '';
+            payments.forEach(payment => {
+                const card = document.createElement('div');
+                card.className = 'payment-card';
+
+                const orderStatus = orders.find(o => o.id === payment.orderId)?.status || 'N/A';
+                const actionButtons = getActionButtons(payment.id, payment.status);
+
+                card.innerHTML = `
+                    <div class="payment-card-header">
+                        <h3>Payment #${payment.id} — Order #${payment.orderId}</h3>
+                        <span class="payment-status status-${payment.status.toLowerCase()}">${payment.status}</span>
+                    </div>
+                    <div class="payment-details">
+                        <p><strong>Shop:</strong> ${payment.shopkeeper}</p>
+                        <p><strong>Amount:</strong> ₹${payment.amount.toFixed(2)}</p>
+                        <p><strong>Method:</strong> ${payment.method}</p>
+                        <p><strong>Date:</strong> ${payment.date}</p>
+                        <p><strong>Order Status:</strong> <span class="order-status status-${orderStatus}">${orderStatus}</span></p>
+                    </div>
+                    ${actionButtons ? `<div class="action-buttons">${actionButtons}</div>` : ''}
+                `;
+                paymentsListContainer.appendChild(card);
+            });
+            addPaymentListeners();
+        }
+        
+        function getActionButtons(id, status) {
+            let buttons = '';
+            if (status === 'PENDING') {
+                buttons = `<button class="btn btn-mark-paid" data-id="${id}" data-action="mark-paid">Mark Paid</button>`;
+            } else if (status === 'PAID') {
+                buttons = `<button class="btn btn-view" data-id="${id}" data-action="view-order">View Order</button><button class="btn btn-refund" data-id="${id}" data-action="refund">Refund</button>`;
+            } else if (status === 'FAILED' || status === 'REFUNDED') {
+                 buttons = `<button class="btn btn-view" data-id="${id}" data-action="view-order">View Order</button>`;
+            }
+            return buttons;
+        }
+
+        function addPaymentListeners() {
+            document.querySelectorAll('.btn-mark-paid').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const id = parseInt(e.target.dataset.id);
+                    updatePaymentStatus(id, 'PAID');
+                });
+            });
+
+            document.querySelectorAll('.btn-refund').forEach(btn => {
+                 btn.addEventListener('click', (e) => {
+                    const id = parseInt(e.target.dataset.id);
+                    updatePaymentStatus(id, 'REFUNDED');
+                });
+            });
+
+            document.querySelectorAll('.btn-view').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    alert('Viewing order details...');
+                    // In a real app, this would redirect to the specific order page
+                });
+            });
+        }
+        
+        function updatePaymentStatus(id, newStatus) {
+            const paymentIndex = payments.findIndex(p => p.id === id);
+            if (paymentIndex > -1) {
+                payments[paymentIndex].status = newStatus;
+                renderPaymentsPage();
+            }
+        }
+
+        // --- Event Listeners ---
+        document.addEventListener('DOMContentLoaded', () => {
+            renderPaymentsPage();
+
+            if (hamburgerBtn) {
+                hamburgerBtn.addEventListener('click', () => {
+                    sidebar.classList.toggle('active');
+                });
+            }
+
+            if (logoutBtn) {
+                logoutBtn.addEventListener('click', () => {
+                    alert('Logging out...');
+                    window.location.href = 'fresh-cart-home.html';
+                });
+            }
+        });
+    </script>
+</body>
+</html>

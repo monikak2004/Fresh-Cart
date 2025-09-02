@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Placed!</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-dark: #333333;
+            --secondary-light: #f5f5f5;
+            --card-bg: #ffffff;
+            --text-dark: #222222;
+            --text-light: #555555;
+            --border-color: #dddddd;
+            --font-heading: 'Montserrat', sans-serif;
+            --font-body: 'Roboto', sans-serif;
+        }
+        body {
+            font-family: var(--font-body);
+            color: var(--text-dark);
+            background-color: var(--secondary-light);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            text-align: center;
+        }
+        .confirmation-box {
+            background-color: var(--card-bg);
+            padding: 3rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+        .confirmation-box h1 {
+            font-family: var(--font-heading);
+            color: var(--primary-dark);
+        }
+        .confirmation-box p {
+            font-size: 1.1rem;
+            margin-top: 1rem;
+            margin-bottom: 2rem;
+        }
+        .btn-go-home {
+            padding: 0.75rem 1.5rem;
+            background-color: var(--primary-dark);
+            color: var(--card-bg);
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="confirmation-box">
+        <h1>Order Placed Successfully!</h1>
+        <p>Thank you for your order. You can track its status in the Orders section.</p>
+        <a href="shopowner-dashboard.html" class="btn-go-home">Go to Dashboard</a>
+    </div>
+</body>
+</html>

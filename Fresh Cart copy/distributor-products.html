@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fresh Cart - Distributor Products</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        /* --- General Styles & Variables --- */
+        :root {
+            --primary-dark: #333333;
+            --secondary-light: #f5f5f5;
+            --card-bg: #ffffff;
+            --text-dark: #222222;
+            --text-light: #555555;
+            --border-color: #dddddd;
+            --font-heading: 'Montserrat', sans-serif;
+            --font-body: 'Roboto', sans-serif;
+
+            --add-color: #28a745;
+            --edit-color: #007bff;
+            --delete-color: #dc3545;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-body);
+            color: var(--text-dark);
+            line-height: 1.6;
+            background-color: var(--secondary-light);
+            display: flex;
+        }
+
+        h1, h2, h3, h4 {
+            font-family: var(--font-heading);
+        }
+
+        .dashboard-wrapper {
+            display: flex;
+            min-height: 100vh;
+            width: 100%;
+        }
+
+        /* --- Sidebar Navigation --- */
+        .sidebar {
+            width: 250px;
+            background-color: var(--primary-dark);
+            height: 100vh;
+            position: fixed;
+            top: 0;
+            left: -250px;
+            transition: left 0.3s ease-in-out;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+        }
+
+        .sidebar.active {
+            left: 0;
+        }
+
+        .logo {
+            padding: 2rem 1rem;
+            text-align: center;
+            color: var(--secondary-light);
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        .main-nav {
+            list-style: none;
+            padding: 0;
+            flex-grow: 1;
+        }
+
+        .main-nav ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .nav-item a {
+            display: block;
+            padding: 1rem 2rem;
+            color: var(--secondary-light);
+            text-decoration: none;
+            transition: background-color 0.2s;
+            font-weight: 500;
+        }
+
+        .nav-item a.active,
+        .nav-item a:hover {
+            background-color: #555555;
+        }
+
+        .logout-btn {
+            width: 100%;
+            padding: 1rem;
+            background-color: #e0e0e0;
+            color: var(--text-dark);
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            transition: background-color 0.2s;
+        }
+
+        .logout-btn:hover {
+            background-color: #cccccc;
+        }
+
+        /* --- Hamburger Menu & Header --- */
+        .dashboard-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 1rem;
+            background-color: var(--card-bg);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            z-index: 1001;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .hamburger-btn {
+            font-size: 2rem;
+            cursor: pointer;
+            color: var(--primary-dark);
+            background: none;
+            border: none;
+            display: block;
+        }
+        
+        .header-title {
+            font-size: 1.5rem;
+            color: var(--primary-dark);
+        }
+
+        /* --- Main Content Area --- */
+        .content-area {
+            flex-grow: 1;
+            padding: 2rem;
+            padding-top: 6rem;
+            transition: margin-left 0.3s ease-in-out;
+        }
+
+        .sidebar.active ~ .content-area {
+            margin-left: 250px;
+        }
+
+        .page-title {
+            color: var(--primary-dark);
+            margin-bottom: 2rem;
+        }
+
+        /* --- General Layout & Form Styles --- */
+        .search-filter-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .search-filter-container input,
+        .search-filter-container select {
+            flex: 1;
+            min-width: 150px;
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-family: inherit;
+        }
+        
+        .search-filter-container input:focus,
+        .search-filter-container select:focus {
+            outline: none;
+            border-color: var(--primary-dark);
+        }
+        
+        .btn-primary {
+            background-color: var(--add-color);
+            color: var(--white);
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .btn-primary:hover {
+            background-color: #218838;
+        }
+
+        .btn-action {
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            color: var(--white);
+            border: none;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background-color 0.2s;
+        }
+        
+        .btn-edit { background-color: var(--edit-color); }
+        .btn-delete { background-color: var(--delete-color); }
+        .btn-edit:hover { background-color: #0056b3; }
+        .btn-delete:hover { background-color: #c82333; }
+
+        /* --- Product Listing - Table Layout --- */
+        .products-table-container {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            overflow-x: auto;
+        }
+        
+        .products-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+            text-align: left;
+        }
+
+        .products-table thead {
+            background-color: #f1f1f1;
+        }
+
+        .products-table th,
+        .products-table td {
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .products-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .products-table tbody tr:nth-child(even) {
+            background-color: var(--secondary-light);
+        }
+
+        .products-table .stock-low {
+            color: var(--delete-color);
+            font-weight: 600;
+        }
+
+        .products-table .actions-cell {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        /* --- Modal for Add/Edit Form --- */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1002;
+            overflow-y: auto;
+        }
+        
+        .modal-content {
+            background-color: var(--card-bg);
+            padding: 2rem;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 600px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            position: relative;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--text-dark);
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-family: inherit;
+        }
+        
+        /* --- Utility Classes --- */
+        .hidden { display: none; }
+
+        /* --- Responsive Design --- */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 100%;
+                left: -100%;
+            }
+            .sidebar.active {
+                left: 0;
+            }
+            .content-area {
+                padding: 1rem;
+                padding-top: 5rem;
+                margin-left: 0;
+            }
+            .sidebar.active ~ .content-area {
+                margin-left: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-wrapper">
+        <aside class="sidebar" id="sidebar">
+            <div class="logo">Fresh Cart</div>
+            <nav class="main-nav">
+                <ul>
+                    <li class="nav-item"><a href="distributor-dashboard.html">Dashboard</a></li>
+                    <li class="nav-item"><a href="distributor-orders.html">Orders</a></li>
+                    <li class="nav-item active"><a href="distributor-products.html">Products</a></li>
+                    <li class="nav-item"><a href="distributor-payments.html">Payments</a></li>
+                    <li class="nav-item"><a href="distributor-profile.html">Profile</a></li>
+                </ul>
+            </nav>
+            <button class="logout-btn">Log Out</button>
+        </aside>
+
+        <header class="dashboard-header">
+            <button class="hamburger-btn" id="hamburger-btn">☰</button>
+            <div class="header-title">Fresh Cart</div>
+        </header>
+
+        <main class="content-area">
+            <h1 class="page-title">Product Management</h1>
+
+            <div class="search-filter-container">
+                <input type="text" id="searchInput" placeholder="Search products...">
+                <select id="categoryFilter">
+                    <option value="all">All Categories</option>
+                    <option value="fruits">Fruits</option>
+                    <option value="vegetables">Vegetables</option>
+                    <option value="bakery">Bakery</option>
+                </select>
+                <select id="sortDropdown">
+                    <option value="name-asc">Name (A-Z)</option>
+                    <option value="name-desc">Name (Z-A)</option>
+                    <option value="stock-asc">Stock (Low to High)</option>
+                    <option value="stock-desc">Stock (High to Low)</option>
+                </select>
+                <button class="btn-primary" id="addProductBtn">Add New Product</button>
+            </div>
+
+            <div class="products-table-container">
+                <table class="products-table">
+                    <thead>
+                        <tr>
+                            <th>Product Name</th>
+                            <th>Category</th>
+                            <th>Price</th>
+                            <th>Stock</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="products-list">
+                        </tbody>
+                </table>
+            </div>
+        </main>
+        
+        <div id="productModal" class="modal-overlay hidden">
+            <div class="modal-content">
+                <span class="close-btn">&times;</span>
+                <h2 id="modalTitle">Add New Product</h2>
+                <form id="productForm">
+                    <input type="hidden" id="productId">
+                    <div class="form-group">
+                        <label for="productName">Product Name</label>
+                        <input type="text" id="productName" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="productCategory">Category</label>
+                        <select id="productCategory" required>
+                            <option value="fruits">Fruits</option>
+                            <option value="vegetables">Vegetables</option>
+                            <option value="bakery">Bakery</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="productImage">Product Image (URL)</label>
+                        <input type="text" id="productImage">
+                    </div>
+                    <div class="form-group">
+                        <label for="productStock">Total Stock</label>
+                        <input type="number" id="productStock" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="productUnit">Unit of Sale (e.g., kg, piece)</label>
+                        <input type="text" id="productUnit" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="productPrice">Price</label>
+                        <input type="number" id="productPrice" required>
+                    </div>
+                    
+                    <div class="form-group" style="margin-top: 1rem;">
+                        <button type="submit" class="btn-primary">Save Product</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+    </div>
+
+    <script>
+        // --- Dummy Data ---
+        let products = [
+            {
+                id: "p1", name: "Vanilla Cake", category: "bakery", image: "https://images.unsplash.com/photo-1578985545064-a69db6e8a45e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w1MDcwODZ8MHwxfHNlYXJjaHwxfHxjYWtlfGVufDB8fHx8MTcwNzY4ODQ5N3ww&ixlib=rb-4.0.3&q=80&w=400", price: 500, stock: 30, unit: "piece"
+            },
+            {
+                id: "p2", name: "Chocolate Cake", category: "bakery", image: "https://images.unsplash.com/photo-1627834377411-8da5f4f09de8?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w1MDcwODZ8MHwxfHNlYXJjaHwzfHxjaG9jb2xhdGUlMjBjYWtlfGVufDB8fHx8MTcwNzY5MTE4MXww&ixlib=rb-4.0.3&q=80&w=400", price: 550, stock: 45, unit: "piece"
+            },
+            {
+                id: "p3", name: "Red Velvet Cake", category: "bakery", image: "https://images.unsplash.com/photo-1596706059902-6e279313a7c6?fit=crop&w=400&q=80", price: 620, stock: 12, unit: "piece"
+            },
+            {
+                id: "p4", name: "Green Apples", category: "fruits", image: "https://images.unsplash.com/photo-1619546850020-f56f1837834e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w1MDcwODZ8MHwxfHNlYXJjaHwyfHxhcHBsZSUyMGZydWl0c3xlbnwwfHx8fDE3MjQ5MjIyMzZ8MA&ixlib=rb-4.0.3&q=80&w=400", price: 150, stock: 50, unit: "kg"
+            },
+            {
+                id: "p5", name: "Kashmiri Apples", category: "fruits", image: "https://images.unsplash.com/photo-1596706059902-6e279313a7c6?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w1MDcwODZ8MHwxfHNlYXJjaHw3fHxvcmdhbmljJTIwYXBwbGVzfGVufDB8fHx8MTcwMTg4Mjk4MHww&ixlib=rb-4.0.3&q=80&w=400", price: 120, stock: 40, unit: "kg"
+            },
+            {
+                id: "p6", name: "Brown Bread", category: "bakery", image: "https://images.unsplash.com/photo-1603534575820-22d2f7035f29?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w1MDcwODZ8MHwxfHNlYXJjaHwyfHxicm93biUyMGJyZWFkfGVufDB8fHx8MTcwNzY5MTE5NXww&ixlib=rb-4.0.3&q=80&w=400", price: 80, stock: 30, unit: "piece"
+            },
+            {
+                id: "p7", name: "Tomatoes", category: "vegetables", image: "https://images.unsplash.com/photo-1598170044813-f8ed664d5053?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w1MDcwODZ8MHwxfHNlYXJjaHw2fHx0b21hdG9lcyUyMHZhcmlhbnRzfGVufDB8fHx8MTcwNzY5MTc5OXww&ixlib=rb-4.0.3&q=80&w=400", price: 50, stock: 15, unit: "kg"
+            },
+            {
+                id: "p8", name: "Potatoes", category: "vegetables", image: "https://images.unsplash.com/photo-1518977676601-54a81f60407a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w1MDcwODZ8MHwxfHNlYXJjaHwxMXx8cG90YXRvZXMlMjB2YXJpYW50c3xlbnwwfHx8fDE3MDc2OTIxMjB8MA&ixlib=rb-4.0.3&q=80&w=400", price: 35, stock: 5, unit: "kg"
+            },
+            {
+                id: "p9", name: "Milk Bread", category: "bakery", image: "https://images.unsplash.com/photo-1596706059902-6e279313a7c6?fit=crop&w=400&q=80", price: 45, stock: 25, unit: "piece"
+            }
+        ];
+
+        // --- DOM Elements ---
+        const sidebar = document.getElementById('sidebar');
+        const hamburgerBtn = document.getElementById('hamburger-btn');
+        const productsListContainer = document.getElementById('products-list');
+        const addProductBtn = document.getElementById('addProductBtn');
+        const productModal = document.getElementById('productModal');
+        const modalCloseBtn = productModal.querySelector('.close-btn');
+        const productForm = document.getElementById('productForm');
+        const modalTitle = document.getElementById('modalTitle');
+        const searchInput = document.getElementById('searchInput');
+        const categoryFilter = document.getElementById('categoryFilter');
+        const sortDropdown = document.getElementById('sortDropdown');
+
+        // --- Event Listeners ---
+        document.addEventListener('DOMContentLoaded', () => {
+            renderProducts();
+            
+            if (hamburgerBtn) {
+                hamburgerBtn.addEventListener('click', () => {
+                    sidebar.classList.toggle('active');
+                });
+            }
+        });
+        
+        searchInput.addEventListener('input', renderProducts);
+        categoryFilter.addEventListener('change', renderProducts);
+        sortDropdown.addEventListener('change', renderProducts);
+        addProductBtn.addEventListener('click', () => openProductModal());
+        modalCloseBtn.addEventListener('click', () => productModal.classList.add('hidden'));
+
+        productForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const newProduct = {
+                id: document.getElementById('productId').value || 'p' + (products.length + 1),
+                name: document.getElementById('productName').value,
+                category: document.getElementById('productCategory').value,
+                image: document.getElementById('productImage').value,
+                stock: parseInt(document.getElementById('productStock').value),
+                unit: document.getElementById('productUnit').value,
+                price: parseFloat(document.getElementById('productPrice').value)
+            };
+
+            if (productForm.dataset.editing === 'true') {
+                const index = products.findIndex(p => p.id === newProduct.id);
+                if (index !== -1) {
+                    products[index] = newProduct;
+                }
+            } else {
+                products.push(newProduct);
+            }
+
+            productModal.classList.add('hidden');
+            renderProducts();
+        });
+
+        // --- Core Functions ---
+        function renderProducts() {
+            productsListContainer.innerHTML = '';
+            
+            const searchTerm = searchInput.value.toLowerCase();
+            const category = categoryFilter.value;
+            const sort = sortDropdown.value;
+
+            let filteredProducts = products.filter(p => {
+                const nameMatch = p.name.toLowerCase().includes(searchTerm);
+                const categoryMatch = category === 'all' || p.category === category;
+                return nameMatch && categoryMatch;
+            });
+
+            filteredProducts.sort((a, b) => {
+                if (sort === 'name-asc') return a.name.localeCompare(b.name);
+                if (sort === 'name-desc') return b.name.localeCompare(a.name);
+                
+                if (sort === 'stock-asc') return a.stock - b.stock;
+                if (sort === 'stock-desc') return b.stock - a.stock;
+                return 0;
+            });
+
+            filteredProducts.forEach(product => {
+                const isLowStock = product.stock < 10;
+                
+                const row = document.createElement('tr');
+                const stockClass = isLowStock ? 'stock-low' : '';
+
+                row.innerHTML = `
+                    <td>${product.name}</td>
+                    <td>${product.category}</td>
+                    <td>₹${product.price} / ${product.unit}</td>
+                    <td class="${stockClass}">${product.stock} ${product.unit}</td>
+                    <td class="actions-cell">
+                        <button class="btn-action btn-edit" data-id="${product.id}">Edit</button>
+                        <button class="btn-action btn-delete" data-id="${product.id}">Delete</button>
+                    </td>
+                `;
+                productsListContainer.appendChild(row);
+            });
+            addEventListenersToProducts();
+        }
+
+        function addEventListenersToProducts() {
+            document.querySelectorAll('.btn-edit').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const productId = e.target.dataset.id;
+                    openProductModal(productId);
+                });
+            });
+
+            document.querySelectorAll('.btn-delete').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const productId = e.target.dataset.id;
+                    if (confirm("Are you sure you want to delete this product?")) {
+                        products = products.filter(p => p.id !== productId);
+                        renderProducts();
+                    }
+                });
+            });
+        }
+        
+        function openProductModal(productId = null) {
+            productForm.reset();
+            productForm.dataset.editing = false;
+            
+            if (productId) {
+                const product = products.find(p => p.id === productId);
+                if (product) {
+                    modalTitle.textContent = "Edit Product";
+                    document.getElementById('productId').value = productId;
+                    document.getElementById('productName').value = product.name;
+                    document.getElementById('productCategory').value = product.category;
+                    document.getElementById('productImage').value = product.image;
+                    document.getElementById('productStock').value = product.stock;
+                    document.getElementById('productUnit').value = product.unit;
+                    document.getElementById('productPrice').value = product.price;
+                    productForm.dataset.editing = true;
+                }
+            } else {
+                modalTitle.textContent = "Add New Product";
+            }
+
+            productModal.classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>
