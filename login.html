@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Fresh Cart - Login</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary-dark: #333333;
+      --secondary-light: #f5f5f5;
+      --card-bg: #ffffff;
+      --text-dark: #222222;
+      --text-light: #555555;
+      --border-color: #dddddd;
+      --font-heading: 'Montserrat', sans-serif;
+      --font-body: 'Roboto', sans-serif;
+      --delete-color: #dc3545;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: var(--font-body);
+      background-color: var(--secondary-light);
+      display: flex; justify-content: center; align-items: center;
+      min-height: 100vh; color: var(--text-dark);
+    }
+    .login-box {
+      background-color: var(--card-bg);
+      border-radius: 12px;
+      padding: 2.5rem 2rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      width: 90%; max-width: 400px; text-align: center;
+    }
+    .login-box h1 { font-size: 2rem; margin-bottom: 1rem; }
+    .login-box p { font-size: 0.9rem; margin-bottom: 1.5rem; color: var(--text-light); }
+    .form-group { margin-bottom: 1rem; text-align: left; }
+    .form-group label { display: block; margin-bottom: 0.5rem; font-weight: 500; }
+    .form-group input, .form-group select {
+      width: 100%; padding: 0.75rem; border: 1px solid var(--border-color);
+      border-radius: 6px; font-family: inherit;
+    }
+    .btn-primary {
+      width: 100%; padding: 0.75rem; font-size: 1rem; font-weight: 600;
+      color: var(--card-bg); background-color: var(--primary-dark);
+      border: none; border-radius: 6px; cursor: pointer;
+    }
+    .btn-primary:hover { background-color: #555555; }
+    .form-error { color: var(--delete-color); font-size: 0.85rem; margin-top: 0.5rem; text-align: left; min-height: 1.1em; }
+    .toggle-options { display: flex; justify-content: space-between; margin-top: 1rem; font-size: 0.9rem; }
+    .toggle-options a { color: var(--text-light); text-decoration: none; }
+    .toggle-options a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="login-box">
+      <h1 id="page-title">Login</h1>
+      <p id="page-subtitle">Please enter your credentials to continue.</p>
+
+      <form id="auth-form">
+        <div class="form-group">
+          <label for="name" id="name-label">Name</label>
+          <input type="text" id="name" placeholder="Enter your name">
+        </div>
+
+        <div id="email-login-form">
+          <div class="form-group">
+            <label for="email">Email</label>
+            <input type="email" id="email" required>
+          </div>
+          <div class="form-group">
+            <label for="password">Password</label>
+            <input type="password" id="password" required>
+          </div>
+        </div>
+
+        <!-- Role select is shown only in Sign Up mode -->
+        <div class="form-group" id="role-select-group" style="display:none;">
+          <label for="role-select">Select Role</label>
+          <select id="role-select">
+            <option value="shop_owner">Shop Owner</option>
+            <option value="distributor">Distributor</option>
+          </select>
+        </div>
+
+        <div class="form-error" id="error-message"></div>
+        <button type="submit" class="btn-primary" id="main-btn">Sign In</button>
+      </form>
+
+      <div class="toggle-options">
+        <a href="#" id="forgot-password">Forgot Password?</a>
+        <a href="#" id="toggle-auth">Sign Up</a>
+      </div>
+    </div>
+  </main>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const params = new URLSearchParams(window.location.search);
+
+  let userRole = params.get("role") || localStorage.getItem("freshcart_role") || null;
+  if (userRole === "shopowner") userRole = "shop_owner"; // normalize
+
+  let isSignIn = true;
+
+  const pageTitle = document.getElementById("page-title");
+  const pageSubtitle = document.getElementById("page-subtitle");
+  const authForm = document.getElementById("auth-form");
+  const nameInput = document.getElementById("name");
+  const emailInput = document.getElementById("email");
+  const passwordInput = document.getElementById("password");
+  const roleSelectGroup = document.getElementById("role-select-group");
+  const roleSelect = document.getElementById("role-select");
+  const mainBtn = document.getElementById("main-btn");
+  const forgotPasswordLink = document.getElementById("forgot-password");
+  const toggleAuthLink = document.getElementById("toggle-auth");
+  const errorMessage = document.getElementById("error-message");
+
+  const API_BASE = "http://localhost:5000"; // backend
+
+  function roleLabel(r) {
+    if (r === "distributor") return "Distributor";
+    if (r === "shop_owner") return "Shop Owner";
+    return "User";
+  }
+
+  function updateUI() {
+    errorMessage.textContent = "";
+    if (!userRole) userRole = "shop_owner";
+
+    if (isSignIn) {
+      pageTitle.textContent = userRole === "distributor" ? "Distributor Login" : "Shop Owner Login";
+      pageSubtitle.textContent = `Welcome ${roleLabel(userRole)}, please enter your credentials.`;
+      roleSelectGroup.style.display = "none";
+      mainBtn.textContent = "Sign In";
+      toggleAuthLink.textContent = "Sign Up";
+      forgotPasswordLink.style.display = "block";
+    } else {
+      pageTitle.textContent = "Create an Account";
+      pageSubtitle.textContent = `Welcome ${roleLabel(userRole)}! Please fill in your details.`;
+      roleSelectGroup.style.display = "block";
+      roleSelect.value = userRole;
+      mainBtn.textContent = "Register";
+      toggleAuthLink.textContent = "Sign In";
+      forgotPasswordLink.style.display = "none";
+    }
+  }
+
+  toggleAuthLink.addEventListener("click", (e) => {
+    e.preventDefault();
+    isSignIn = !isSignIn;
+    updateUI();
+  });
+
+  roleSelect.addEventListener("change", () => {
+    userRole = roleSelect.value;
+    localStorage.setItem("freshcart_role", userRole);
+  });
+
+  authForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    errorMessage.textContent = "";
+
+    const email = emailInput.value.trim();
+    const password = passwordInput.value.trim();
+    const name = nameInput.value.trim();
+
+    if (!email.endsWith("@gmail.com")) {
+      errorMessage.textContent = "Email must be a valid Gmail address.";
+      return;
+    }
+    if (password.length < 8) {
+      errorMessage.textContent = "Password must be at least 8 characters long.";
+      return;
+    }
+
+    if (isSignIn) {
+      // ====== LOGIN ======
+      try {
+        const res = await fetch(`${API_BASE}/login`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Login failed");
+
+        // Save user in localStorage (incl token)
+        localStorage.setItem("fc_user", JSON.stringify({
+          user_id: data.user_id,
+          role: data.role,
+          name: data.name,
+          token: data.token
+        }));
+
+        // Redirect
+        if (data.role === "shop_owner") {
+          window.location.href = "shopowner/shopowner-dashboard.html";
+        } else if (data.role === "distributor") {
+          window.location.href = "distributor-dashboard.html";
+        } else {
+          errorMessage.textContent = "Unknown role. Please choose a valid role.";
+        }                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           
+      } catch (err) {
+        errorMessage.textContent = err.message;
+      }
+    } else {
+      // ====== REGISTER ======
+      try {
+        const res = await fetch(`${API_BASE}/register`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name,
+            email,
+            password,
+            role: userRole
+          })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Registration failed");
+
+        alert("Registration successful! Please sign in.");
+        isSignIn = true;
+        updateUI();
+      } catch (err) {
+        errorMessage.textContent = err.message;
+      }
+    }
+  });
+
+  forgotPasswordLink.addEventListener("click", (e) => {
+    e.preventDefault();
+    const email = emailInput.value.trim();
+    if (!email) {
+      errorMessage.textContent = "Please enter your email to reset password.";
+      return;
+    }
+    errorMessage.textContent = "Password reset email sent (simulation).";
+  });
+
+  updateUI();
+});
+</script>
+
+
+</body>
+</html>

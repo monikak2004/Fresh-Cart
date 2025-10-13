@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fresh Cart - Select Distributor</title>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&family=Roboto:wght@400;500;700&display=swap"
+    rel="stylesheet"
+  />
+  <style>
+    :root {
+      --primary-dark: #333333;
+      --secondary-light: #f5f5f5;
+      --card-bg: #ffffff;
+      --text-dark: #222222;
+      --text-light: #555555;
+      --border-color: #dddddd;
+      --font-heading: "Montserrat", sans-serif;
+      --font-body: "Roboto", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font-body);
+      color: var(--text-dark);
+      line-height: 1.6;
+      background-color: var(--secondary-light);
+      display: flex;
+    }
+
+    .dashboard-wrapper {
+      display: flex;
+      min-height: 100vh;
+      width: 100%;
+    }
+
+    .sidebar {
+      width: 250px;
+      background-color: var(--primary-dark);
+      height: 100vh;
+      position: fixed;
+      top: 0;
+      left: -250px;
+      transition: left 0.3s ease-in-out;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 2px 0 10px rgba(0, 0, 0, 0.2);
+      z-index: 1000;
+    }
+
+    .sidebar.active {
+      left: 0;
+    }
+
+    .logo {
+      padding: 2rem 1rem;
+      text-align: center;
+      color: var(--secondary-light);
+      font-size: 1.5rem;
+      font-weight: bold;
+    }
+
+    .nav-item a {
+      display: block;
+      padding: 1rem 2rem;
+      color: var(--secondary-light);
+      text-decoration: none;
+      transition: background-color 0.2s;
+      font-weight: 500;
+    }
+
+    .nav-item a.active,
+    .nav-item a:hover {
+      background-color: #555555;
+    }
+
+    .header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      padding: 1rem 2rem;
+      background-color: var(--card-bg);
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+      z-index: 1001;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .hamburger-btn {
+      font-size: 2rem;
+      cursor: pointer;
+      color: var(--primary-dark);
+      background: none;
+      border: none;
+      display: block;
+      position: absolute;
+      left: 1rem;
+    }
+
+    .header-logo {
+      font-family: var(--font-heading);
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: var(--primary-dark);
+      text-decoration: none;
+      margin-left: 2rem;
+    }
+
+    .main-content {
+      padding: 2rem;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding-top: 6rem;
+      width: 100%;
+    }
+
+    .page-title {
+      color: var(--primary-dark);
+      margin-bottom: 2rem;
+    }
+
+    .distributor-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .distributor-card {
+      background-color: var(--card-bg);
+      padding: 2rem;
+      border-radius: 12px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      text-align: center;
+      cursor: pointer;
+      transition: transform 0.2s, background-color 0.2s;
+    }
+
+    .distributor-card:hover,
+    .distributor-card.selected {
+      transform: translateY(-5px);
+      background-color: #e0e0e0;
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .btn-primary {
+      width: 100%;
+      padding: 0.75rem 1.5rem;
+      background-color: var(--primary-dark);
+      color: var(--card-bg);
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background-color 0.2s;
+      margin-top: 2rem;
+    }
+
+    .btn-primary:hover {
+      background-color: #555555;
+    }
+
+    @media (max-width: 768px) {
+      .sidebar {
+        width: 100%;
+        left: -100%;
+      }
+
+      .sidebar.active {
+        left: 0;
+      }
+
+      .main-content {
+        padding: 1rem;
+        padding-top: 5rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="dashboard-wrapper">
+    <aside class="sidebar" id="sidebar">
+      <div class="logo">Fresh Cart</div>
+      <nav class="main-nav">
+        <ul>
+          <li class="nav-item"><a href="shopowner-dashboard.html">Dashboard</a></li>
+          <li class="nav-item"><a href="shopowner-catalog.html">Catalog</a></li>
+          <li class="nav-item active"><a href="shopowner-cart.html">Cart</a></li>
+          <li class="nav-item"><a href="shopowner-orders.html">Orders</a></li>
+          <li class="nav-item"><a href="shopowner-payments.html">Payments</a></li>
+          <li class="nav-item"><a href="shopowner-profile.html">Profile</a></li>
+        </ul>
+      </nav>
+      <button class="logout-btn">Log Out</button>
+    </aside>
+
+    <header class="header">
+      <button class="hamburger-btn" id="hamburger-btn">☰</button>
+      <a href="#" class="header-logo">Fresh Cart</a>
+    </header>
+
+    <main class="main-content">
+      <h1 class="page-title">Select a Distributor</h1>
+      <div class="distributor-list" id="distributor-list"></div>
+      <button class="btn-primary" id="continue-btn" disabled>
+        Continue to Payments
+      </button>
+    </main>
+  </div>
+<script>
+const API_BASE = "http://127.0.0.1:5000";
+let selectedDistributor = null;
+
+async function loadDistributors() {
+  try {
+    const res = await fetch(`${API_BASE}/distributors`);
+    if (!res.ok) throw new Error("Failed to load distributors");
+
+    const distributors = await res.json();
+    const list = document.getElementById("distributor-list");
+    list.innerHTML = "";
+
+    if (distributors.length === 0) {
+      list.innerHTML = "<p style='text-align:center;color:#666;'>No distributors available.</p>";
+      return;
+    }
+
+    distributors.forEach((d) => {
+      const card = document.createElement("div");
+      card.className = "distributor-card";
+      card.dataset.id = d.user_id;
+      card.innerHTML = `
+        <h3>${d.name}</h3>
+        <p><b>📞</b> ${d.contact_no || "N/A"}</p>
+        <p><b>📍</b> ${d.address || "Not Provided"}</p>
+      `;
+      card.addEventListener("click", () => selectDistributor(d, card));
+      list.appendChild(card);
+    });
+  } catch (err) {
+    console.error("❌ Error loading distributors:", err);
+  }
+}
+
+function selectDistributor(distributor, card) {
+  document.querySelectorAll(".distributor-card").forEach(c => c.classList.remove("selected"));
+  card.classList.add("selected");
+  selectedDistributor = distributor;
+  document.getElementById("continue-btn").disabled = false;
+}
+
+async function placeOrder() {
+  const cart = JSON.parse(localStorage.getItem("freshcart_cart") || "[]");
+  const user = JSON.parse(localStorage.getItem("fc_user") || "{}");
+  const total = parseFloat(localStorage.getItem("checkout_cart_total") || "0");
+  const deliveryFee = parseFloat(localStorage.getItem("checkout_delivery_fee") || "0");
+
+  if (!user.user_id || cart.length === 0) {
+    alert("Missing cart or user info. Please restart checkout.");
+    return null;
+  }
+
+  try {
+    const res = await fetch(`${API_BASE}/place_order`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        user_id: user.user_id,
+        cart: cart,
+        total: total,
+        delivery_fee: deliveryFee
+      })
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Failed to place order");
+
+    console.log("✅ Order placed successfully:", data);
+    localStorage.setItem("order_id", data.order_id);
+    return data.order_id;
+
+  } catch (err) {
+    console.error("❌ Error placing order:", err);
+    alert("Failed to place order. Please try again.");
+    return null;
+  }
+}
+
+document.getElementById("continue-btn").addEventListener("click", async () => {
+  if (!selectedDistributor) return alert("Please select a distributor first.");
+
+  localStorage.setItem("selectedDistributor", JSON.stringify(selectedDistributor));
+
+  const orderId = await placeOrder();
+  if (orderId) {
+    window.location.href = "shopowner-payment-options.html";
+  }
+});
+
+document.addEventListener("DOMContentLoaded", loadDistributors);
+</script>
+
+</body>
+</html>

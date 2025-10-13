@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fresh Cart - Shopkeeper Catalog</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        /* --- Global Styles & Variables --- */
+        :root {
+            --primary-dark: #333333;
+            --secondary-light: #f5f5f5;
+            --card-bg: #ffffff;
+            --text-dark: #222222;
+            --text-light: #555555;
+            --border-color: #dddddd;
+            --font-heading: 'Montserrat', sans-serif;
+            --font-body: 'Roboto', sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-body);
+            color: var(--text-dark);
+            line-height: 1.6;
+            background-color: var(--secondary-light);
+            display: flex;
+        }
+
+        h1, h2, h3, h4 {
+            font-family: var(--font-heading);
+        }
+
+        .dashboard-wrapper {
+            display: flex;
+            min-height: 100vh;
+            width: 100%;
+        }
+
+        /* --- Sidebar Navigation --- */
+        .sidebar {
+            width: 250px;
+            background-color: var(--primary-dark);
+            height: 100vh;
+            position: fixed;
+            top: 0;
+            left: -250px;
+            transition: left 0.3s ease-in-out;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+        }
+
+        .sidebar.active {
+            left: 0;
+        }
+
+        .logo {
+            padding: 2rem 1rem;
+            text-align: center;
+            color: var(--secondary-light);
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        .main-nav {
+            list-style: none;
+            padding: 0;
+            flex-grow: 1;
+        }
+
+        .main-nav ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .nav-item a {
+            display: block;
+            padding: 1rem 2rem;
+            color: var(--secondary-light);
+            text-decoration: none;
+            transition: background-color 0.2s;
+            font-weight: 500;
+        }
+
+        .nav-item a.active,
+        .nav-item a:hover {
+            background-color: #555555;
+        }
+
+        .logout-btn {
+            width: 100%;
+            padding: 1rem;
+            background-color: #e0e0e0;
+            color: var(--text-dark);
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            transition: background-color 0.2s;
+        }
+
+        .logout-btn:hover {
+            background-color: #cccccc;
+        }
+
+        /* --- Hamburger Menu & Header --- */
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 1rem 2rem;
+            background-color: var(--card-bg);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            z-index: 1001;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .hamburger-btn {
+            font-size: 2rem;
+            cursor: pointer;
+            color: var(--primary-dark);
+            background: none;
+            border: none;
+            display: block;
+            position: absolute;
+            left: 1rem;
+        }
+
+        .header-logo {
+            font-family: var(--font-heading);
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--primary-dark);
+            text-decoration: none;
+            margin-left: 2rem;
+        }
+
+        .header-controls {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+        
+        .search-bar {
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            font-family: inherit;
+        }
+        
+        .header-controls-link {
+            font-size: 1.5rem;
+            color: var(--primary-dark);
+            text-decoration: none;
+            position: relative;
+        }
+
+        .cart-count {
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            background-color: #dc3545;
+            color: white;
+            font-size: 0.8rem;
+            font-weight: 600;
+            padding: 2px 6px;
+            border-radius: 50%;
+        }
+
+        /* --- Main Content Area --- */
+        .main-content {
+            padding: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding-top: 6rem;
+            width: 100%;
+        }
+
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .product-card {
+            background-color: var(--card-bg);
+            padding: 1.5rem;
+            border-radius: 16px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: transform 0.2s;
+        }
+
+        .product-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .product-image {
+            width: 100%;
+            height: 180px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+
+        .product-name {
+            font-size: 1.4rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+        
+        .product-controls {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .product-dropdown {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            background-color: transparent;
+            font-family: inherit;
+        }
+
+        .quantity-group {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .quantity-input {
+            flex-grow: 1;
+            padding: 0.5rem;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            text-align: center;
+            font-family: inherit;
+        }
+
+        .add-to-cart-btn {
+            width: 100%;
+            padding: 0.75rem;
+            background-color: var(--primary-dark);
+            color: var(--card-bg);
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            margin-top: 0.5rem;
+            transition: background-color 0.2s;
+        }
+
+        .add-to-cart-btn:hover {
+            background-color: #555555;
+        }
+
+        .add-to-cart-btn:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        
+        /* --- Cart Sidebar Styles --- */
+        .cart-sidebar {
+            width: 350px;
+            height: 100vh;
+            background-color: var(--card-bg);
+            position: fixed;
+            top: 0;
+            right: -350px;
+            box-shadow: -2px 0 10px rgba(0, 0, 0, 0.2);
+            transition: right 0.3s ease-in-out;
+            z-index: 1002;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .cart-sidebar.active {
+            right: 0;
+        }
+        
+        .cart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .cart-items-list {
+            flex-grow: 1;
+            overflow-y: auto;
+        }
+
+        .cart-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 0;
+            border-bottom: 1px dashed var(--border-color);
+        }
+
+        .cart-item-details {
+            text-align: left;
+        }
+
+        .cart-item-details h4 {
+            font-size: 1rem;
+        }
+
+        .cart-item-details p {
+            font-size: 0.8rem;
+            color: var(--text-light);
+        }
+
+        .cart-summary {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 2px solid var(--border-color);
+        }
+        
+        .cart-summary h3 {
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .checkout-btn {
+            width: 100%;
+            padding: 0.75rem;
+            background-color: var(--primary-dark);
+            color: var(--white);
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            margin-top: 1rem;
+            cursor: pointer;
+        }
+
+        /* --- Utility & Responsive --- */
+        .hidden {
+            display: none;
+        }
+        
+        @media (max-width: 768px) {
+            .header {
+                padding: 1rem;
+            }
+            .header-logo {
+                font-size: 1.5rem;
+            }
+            .header-controls {
+                gap: 0.5rem;
+            }
+            .search-bar {
+                display: none;
+            }
+            .hamburger-btn {
+                display: block;
+            }
+            .main-content {
+                padding: 1rem;
+                padding-top: 5rem;
+            }
+            .cart-sidebar {
+                width: 100%;
+                right: -100%;
+            }
+            .cart-sidebar.active {
+                right: 0;
+            }
+        }
+    </style>
+</head>
+<body class="dashboard-page">
+    <div class="dashboard-wrapper">
+        <aside class="sidebar" id="sidebar">
+            <div class="logo">Fresh Cart</div>
+            <nav class="main-nav">
+                <ul>
+                    <li class="nav-item"><a href="shopowner-dashboard.html">Dashboard</a></li>
+                    <li class="nav-item active"><a href="shopowner-catalog.html">Catalog</a></li>
+                    <li class="nav-item"><a href="shopowner-orders.html">Orders</a></li>
+                    <li class="nav-item"><a href="shopowner-payments.html">Payments</a></li>
+                    <li class="nav-item"><a href="shopowner-profile.html">Profile</a></li>
+                </ul>
+            </nav>
+            <button class="logout-btn">Log Out</button>
+        </aside>
+
+        <header class="header">
+            <button class="hamburger-btn" id="hamburger-btn">☰</button>
+            <a href="#" class="header-logo">Fresh Cart</a>
+            <div class="header-controls">
+                <input type="text" id="productSearch" placeholder="Search products..." class="search-bar">
+                <select id="categoryFilter" class="product-dropdown">
+                    <option value="all">All Categories</option>
+                    <option value="vegetables">Vegetables</option>
+                    <option value="fruits">Fruits</option>
+                    <option value="bakery">Bakery</option>
+                </select>
+                <select id="sortOptions" class="product-dropdown">
+                    <option value="name-asc">Name (A-Z)</option>
+                    <option value="price-asc">Price (Low to High)</option>
+                    <option value="price-desc">Price (High to Low)</option>
+                </select>
+                <a href="#" class="header-controls-link" id="open-cart-btn">
+                    🛒
+                    <span class="cart-count">0</span>
+                </a>
+            </div>
+        </header>
+
+        <div class="main-content">
+            <div class="products-grid" id="products-grid">
+                </div>
+        </div>
+
+        <aside class="cart-sidebar" id="cart-sidebar">
+            <div class="cart-header">
+                <h2>Your Cart</h2>
+                <span class="close-cart-btn">✖</span>
+            </div>
+            <div class="cart-items-list" id="cart-items-list">
+                </div>
+            <div class="cart-summary" id="cart-summary">
+                <h3>Grand Total: <span id="grand-total">₹0.00</span></h3>
+                <button class="checkout-btn">Checkout</button>
+            </div>
+        </aside>
+    </div>
+
+<script>
+/**
+ * FreshCart — Shopowner Catalog
+ * Product → Variant (subproduct) dropdown → Brand/Price dropdown
+ * Keeps your HTML/CSS exactly the same.
+ */
+
+const API_BASE = "http://127.0.0.1:5000";
+
+let catalog = {};   // { Category: { Product: { VariantName: [ {variant_id,brand,unit,price,stock}, ... ] } } }
+let cart = JSON.parse(localStorage.getItem("freshcart_cart") || "[]");
+
+// ============================
+// Helpers (DOM)
+// ============================
+const productsGrid   = document.getElementById("products-grid");
+const cartSidebar    = document.getElementById("cart-sidebar");
+const cartItemsList  = document.getElementById("cart-items-list");
+const grandTotalEl   = document.getElementById("grand-total");
+const cartCountEl    = document.querySelector(".cart-count");
+const sidebar        = document.getElementById("sidebar");
+const hamburgerBtn   = document.getElementById("hamburger-btn");
+const openCartBtn    = document.getElementById("open-cart-btn");
+const closeCartBtn   = document.querySelector(".close-cart-btn");
+const checkoutBtn    = document.querySelector(".checkout-btn");
+
+
+async function loadCatalog() {
+  try {
+    const res = await fetch(`${API_BASE}/catalog`);
+    const data = await res.json();
+
+    if (!Array.isArray(data) || data.length === 0) {
+      document.getElementById("catalog-list").innerHTML =
+        "<p>No products available</p>";
+      return;
+    }
+
+    // Render dynamically
+    document.getElementById("catalog-list").innerHTML = data
+      .map(item => `
+        <div class="catalog-card">
+          <h3>${item.subproduct}</h3>
+          <p><strong>Brand:</strong> ${item.brand}</p>
+          <p><strong>Distributor:</strong> ${item.distributor_name}</p>
+          <p><strong>Price:</strong> ₹${item.price} / ${item.unit}</p>
+          <p><strong>Stock:</strong> ${item.stock}</p>
+        </div>
+      `)
+      .join("");
+  } catch (err) {
+    console.error("❌ Failed to load catalog:", err);
+  }
+}
+
+document.addEventListener("DOMContentLoaded", loadCatalog);
+
+
+// ============================
+// Fetch Catalog from backend and group it
+// ============================
+async function fetchCatalog() {
+  try {
+    const res = await fetch(`${API_BASE}/catalog`);
+    if (!res.ok) throw new Error("Failed to load catalog");
+    const rows = await res.json();
+
+    // Group → Category → Product → VariantName(subproduct) → list of brand/price rows
+    catalog = {};
+    rows.forEach(r => {
+      const category = r.category || "Other";
+      const product  = r.product  || "Product";
+      const variantName = r.subproduct || "Default";
+
+      catalog[category] ??= {};
+      catalog[category][product] ??= {};
+      catalog[category][product][variantName] ??= [];
+      catalog[category][product][variantName].push({
+        variant_id: r.variant_id,
+        brand: r.brand,
+        unit: r.unit,
+        price: r.price,
+        stock: r.stock
+      });
+    });
+
+    renderProducts();
+  } catch (err) {
+    console.error("❌ Error fetching catalog:", err);
+    productsGrid.innerHTML =
+      `<p style="color:#b00;text-align:center;">Failed to load catalog. Is the backend running?</p>`;
+  }
+}
+
+// ============================
+// Filters / Search helpers
+// ============================
+function categoryMatches(catFilterValue, categoryName) {
+  if (!catFilterValue || catFilterValue === "all") return true;
+  // filter values are lowercase ('fruits', 'vegetables', 'bakery')
+  return (categoryName || "").toLowerCase() === catFilterValue.toLowerCase();
+}
+
+function productOrVariantMatchesSearch(productName, variantsObj, term) {
+  if (!term) return true;
+  const t = term.toLowerCase();
+  if ((productName || "").toLowerCase().includes(t)) return true;
+  for (const variantName in variantsObj) {
+    if (variantName.toLowerCase().includes(t)) return true;
+    const rows = variantsObj[variantName];
+    if (rows.some(r => (r.brand || "").toLowerCase().includes(t))) return true;
+  }
+  return false;
+}
+
+// ============================
+// Render Products (card per PRODUCT)
+// ============================
+function renderProducts() {
+  const searchTerm = (document.getElementById("productSearch")?.value || "").trim();
+  const selectedCategory = (document.getElementById("categoryFilter")?.value || "all");
+  const sortValue = (document.getElementById("sortOptions")?.value || "name-asc");
+
+  productsGrid.innerHTML = "";
+
+  // Build sortable product list
+  const productsList = []; // [{category, product, variantsObj, minPrice}]
+  for (const category in catalog) {
+    if (!categoryMatches(selectedCategory, category)) continue;
+
+    const productsObj = catalog[category] || {};
+    for (const product in productsObj) {
+      const variantsObj = productsObj[product] || {}; // { "Kashmiri Apple": [...], "Green Apple": [...] }
+      if (!productOrVariantMatchesSearch(product, variantsObj, searchTerm)) continue;
+
+      let minPrice = Number.POSITIVE_INFINITY;
+      Object.values(variantsObj).forEach(rows => {
+        rows.forEach(r => {
+          const p = parseFloat(r.price);
+          if (!isNaN(p)) minPrice = Math.min(minPrice, p);
+        });
+      });
+      if (!isFinite(minPrice)) minPrice = 0;
+
+      productsList.push({ category, product, variantsObj, minPrice });
+    }
+  }
+
+  // Sort
+  productsList.sort((a, b) => {
+    if (sortValue === "price-asc") return a.minPrice - b.minPrice;
+    if (sortValue === "price-desc") return b.minPrice - a.minPrice;
+    return a.product.localeCompare(b.product); // name-asc
+  });
+
+  // Render each PRODUCT as one card with:
+  // 1) Variant select (subproduct names)
+  // 2) Brand/Price select (for chosen variant)
+  // 3) Qty + Add to Cart
+  productsList.forEach(({ category, product, variantsObj }) => {
+    const card = document.createElement("div");
+    card.className = "product-card";
+
+    const variantNames = Object.keys(variantsObj);
+    if (variantNames.length === 0) return;
+
+    const defaultVariantName = variantNames[0];
+    const defaultRows = variantsObj[defaultVariantName] || [];
+    const defaultUnit = defaultRows[0]?.unit || "";
+
+    const variantOptions = variantNames
+      .map(vn => `<option value="${vn}">${vn}</option>`)
+      .join("");
+
+    const priceOptions = defaultRows
+      .map(v => `
+        <option 
+          value="${v.variant_id}" 
+          data-price="${v.price}" 
+          data-brand="${v.brand}" 
+          data-unit="${v.unit}" 
+          data-stock="${v.stock}">
+          ${v.brand} — ₹${v.price}/${v.unit}
+        </option>
+      `).join("");
+
+    card.innerHTML = `
+      <h3 class="product-name">${product}</h3>
+      <p style="margin-bottom:0.75rem;color:#555;"><b>Category:</b> ${category}</p>
+
+      <div class="product-controls" style="width:100%;">
+        <!-- (1) Variant dropdown (subproduct names) -->
+        <label style="display:block;text-align:left;margin:0.25rem 0 0.25rem 0;">Variant</label>
+        <select class="product-dropdown variant-select">
+          ${variantOptions}
+        </select>
+
+        <!-- (2) Brand & Price dropdown for selected variant -->
+        <label style="display:block;text-align:left;margin:0.75rem 0 0.25rem 0;">Brand / Price</label>
+        <select class="product-dropdown price-select">
+          ${priceOptions}
+        </select>
+
+        <!-- (3) Quantity -->
+        <div class="quantity-group" style="margin-top:0.75rem;">
+          <input type="number" value="1" min="1" class="quantity-input">
+          <span class="unit-label">${defaultUnit}</span>
+        </div>
+
+        <!-- Add to Cart -->
+        <button class="add-to-cart-btn" data-product="${product}">
+          Add to Cart
+        </button>
+      </div>
+    `;
+
+    // Behavior
+    const variantSelect = card.querySelector(".variant-select");
+    const priceSelect = card.querySelector(".price-select");
+    const unitLabel   = card.querySelector(".unit-label");
+
+    // When variant changes → rebuild price options for that variant
+    variantSelect.addEventListener("change", () => {
+      const chosenVariant = variantSelect.value;
+      const rows = variantsObj[chosenVariant] || [];
+
+      priceSelect.innerHTML = rows.map(v => `
+        <option 
+          value="${v.variant_id}" 
+          data-price="${v.price}" 
+          data-brand="${v.brand}" 
+          data-unit="${v.unit}" 
+          data-stock="${v.stock}">
+          ${v.brand} — ₹${v.price}/${v.unit}
+        </option>
+      `).join("");
+
+      // Update unit label to match first option's unit
+      const firstOpt = priceSelect.options[0];
+      unitLabel.textContent = firstOpt ? (firstOpt.dataset.unit || "") : "";
+    });
+
+    // When brand/price option changes, keep unit in sync
+    priceSelect.addEventListener("change", () => {
+      const opt = priceSelect.options[priceSelect.selectedIndex];
+      unitLabel.textContent = opt ? (opt.dataset.unit || "") : unitLabel.textContent;
+    });
+
+    // Add to cart
+    const addBtn = card.querySelector(".add-to-cart-btn");
+    addBtn.addEventListener("click", () => {
+      const variantName = variantSelect.value;
+      const opt = priceSelect.options[priceSelect.selectedIndex];
+      if (!opt) return;
+
+      const variant_id = Number(opt.value);
+      const brand = opt.dataset.brand;
+      const price = parseFloat(opt.dataset.price);
+      const unit  = opt.dataset.unit || "";
+      const qty   = Math.max(1, parseInt(card.querySelector(".quantity-input").value, 10) || 1);
+
+      const existing = cart.find(i => i.variant_id === variant_id);
+      if (existing) {
+        existing.quantity += qty;
+      } else {
+        cart.push({ variant_id, productName: product, variantName, brand, unit, price, quantity: qty });
+      }
+
+      persistCart();
+      updateCartCount();
+      renderCart();
+      cartSidebar.classList.add("active");
+    });
+
+    productsGrid.appendChild(card);
+  });
+}
+
+// ============================
+// Cart logic
+// ============================
+function persistCart() {
+  localStorage.setItem("freshcart_cart", JSON.stringify(cart));
+}
+
+function updateCartCount() {
+  const totalQty = cart.reduce((s, i) => s + i.quantity, 0);
+  if (cartCountEl) cartCountEl.textContent = totalQty;
+}
+
+function renderCart() {
+  cartItemsList.innerHTML = "";
+  let grand = 0;
+
+  if (cart.length === 0) {
+    cartItemsList.innerHTML = '<p style="text-align:center;color:#555;">Your cart is empty.</p>';
+  }
+
+  cart.forEach(item => {
+    const line = item.price * item.quantity;
+    grand += line;
+
+    const row = document.createElement("div");
+    row.className = "cart-item";
+    row.innerHTML = `
+      <div class="cart-item-details">
+        <h4>${item.productName} — ${item.variantName}</h4>
+        <p>${item.brand} — ₹${item.price} × ${item.quantity} ${item.unit}</p>
+      </div>
+      <button class="remove-from-cart-btn" data-variant-id="${item.variant_id}">✖</button>
+    `;
+    cartItemsList.appendChild(row);
+  });
+
+  if (grandTotalEl) grandTotalEl.textContent = `₹${grand.toFixed(2)}`;
+
+  // remove handlers
+  document.querySelectorAll(".remove-from-cart-btn").forEach(b => {
+    b.addEventListener("click", e => {
+      const id = Number(e.currentTarget.dataset.variantId);
+      cart = cart.filter(i => i.variant_id !== id);
+      persistCart();
+      updateCartCount();
+      renderCart();
+    });
+  });
+}
+
+// ============================
+// Wire up UI controls (hamburger, cart, filters, checkout)
+// ============================
+function wireControls() {
+  // Hamburger
+  hamburgerBtn?.addEventListener("click", () => {
+    sidebar?.classList.toggle("active");
+  });
+
+  // Cart open/close
+  openCartBtn?.addEventListener("click", e => {
+    e.preventDefault();
+    cartSidebar?.classList.add("active");
+  });
+  closeCartBtn?.addEventListener("click", () => {
+    cartSidebar?.classList.remove("active");
+  });
+
+  // Filters
+  document.getElementById("productSearch")?.addEventListener("input", renderProducts);
+  document.getElementById("categoryFilter")?.addEventListener("change", renderProducts);
+  document.getElementById("sortOptions")?.addEventListener("change", renderProducts);
+
+  // Checkout
+  checkoutBtn?.addEventListener("click", () => {
+    if (cart.length === 0) {
+      alert("Your cart is empty!");
+      return;
+    }
+    persistCart();
+    window.location.href = "shopowner-checkout.html";
+  });
+}
+
+// ============================
+// Init
+// ============================
+document.addEventListener("DOMContentLoaded", () => {
+  wireControls();
+  updateCartCount();
+  renderCart();
+  fetchCatalog();
+});
+</script>
+
+
+
+
+</body>
+</html>

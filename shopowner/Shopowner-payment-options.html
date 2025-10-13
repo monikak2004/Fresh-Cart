@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fresh Cart - Payment</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary-dark: #333333;
+      --secondary-light: #f5f5f5;
+      --card-bg: #ffffff;
+      --text-dark: #222222;
+      --text-light: #555555;
+      --border-color: #dddddd;
+      --font-heading: 'Montserrat', sans-serif;
+      --font-body: 'Roboto', sans-serif;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--font-body);
+      color: var(--text-dark);
+      line-height: 1.6;
+      background-color: var(--secondary-light);
+      display: flex;
+    }
+
+    h1, h2, h3, h4 { font-family: var(--font-heading); }
+
+    .dashboard-wrapper { display: flex; min-height: 100vh; width: 100%; }
+
+    .sidebar {
+      width: 250px;
+      background-color: var(--primary-dark);
+      height: 100vh;
+      position: fixed;
+      top: 0;
+      left: -250px;
+      transition: left 0.3s ease-in-out;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 2px 0 10px rgba(0, 0, 0, 0.2);
+      z-index: 1000;
+    }
+    .sidebar.active { left: 0; }
+    .logo { padding: 2rem 1rem; text-align: center; color: var(--secondary-light); font-size: 1.5rem; font-weight: bold; }
+    .main-nav ul { list-style: none; padding: 0; }
+    .nav-item a {
+      display: block;
+      padding: 1rem 2rem;
+      color: var(--secondary-light);
+      text-decoration: none;
+      transition: background-color 0.2s;
+      font-weight: 500;
+    }
+    .nav-item a.active, .nav-item a:hover { background-color: #555555; }
+
+    .logout-btn {
+      width: 100%;
+      padding: 1rem;
+      background-color: #e0e0e0;
+      color: var(--text-dark);
+      border: none;
+      cursor: pointer;
+      font-size: 1rem;
+      font-weight: 500;
+      transition: background-color 0.2s;
+    }
+    .logout-btn:hover { background-color: #cccccc; }
+
+    .header {
+      position: fixed; top: 0; left: 0; width: 100%;
+      padding: 1rem 2rem; background-color: var(--card-bg);
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      z-index: 1001;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+
+    .hamburger-btn {
+      font-size: 2rem;
+      cursor: pointer;
+      color: var(--primary-dark);
+      background: none;
+      border: none;
+      position: absolute;
+      left: 1rem;
+    }
+
+    .header-logo {
+      font-family: var(--font-heading);
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: var(--primary-dark);
+      text-decoration: none;
+      margin-left: 2rem;
+    }
+
+    .main-content {
+      padding: 2rem;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding-top: 6rem;
+      width: 100%;
+    }
+
+    .page-title { color: var(--primary-dark); margin-bottom: 2rem; }
+
+    .payment-options-card {
+      background-color: var(--card-bg);
+      padding: 2rem;
+      border-radius: 12px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .payment-options-card h2 {
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .payment-method-btn {
+      width: 100%;
+      padding: 1rem;
+      margin-bottom: 1rem;
+      background-color: var(--secondary-light);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background-color 0.2s, border-color 0.2s;
+      text-align: left;
+    }
+
+    .payment-method-btn:hover,
+    .payment-method-btn.selected {
+      background-color: #e0e0e0;
+      border-color: var(--primary-dark);
+    }
+
+    .btn-primary {
+      width: 100%;
+      padding: 0.75rem 1.5rem;
+      background-color: var(--primary-dark);
+      color: var(--card-bg);
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+    .btn-primary:hover { background-color: #555555; }
+
+    .form-group { margin-bottom: 1rem; }
+    .form-group label { display: block; margin-bottom: 0.5rem; font-weight: 500; }
+    .form-group input {
+      width: 100%;
+      padding: 0.75rem;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      font-family: inherit;
+    }
+
+    .hidden { display: none; }
+
+    @media (max-width: 768px) {
+      .sidebar { width: 100%; left: -100%; }
+      .sidebar.active { left: 0; }
+      .main-content { padding: 1rem; padding-top: 5rem; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="dashboard-wrapper">
+    <aside class="sidebar" id="sidebar">
+      <div class="logo">Fresh Cart</div>
+      <nav class="main-nav">
+        <ul>
+          <li class="nav-item"><a href="shopowner-dashboard.html">Dashboard</a></li>
+          <li class="nav-item"><a href="shopowner-catalog.html">Catalog</a></li>
+          <li class="nav-item"><a href="shopowner-orders.html">Orders</a></li>
+          <li class="nav-item"><a href="shopowner-payments.html">Payments</a></li>
+          <li class="nav-item"><a href="shopowner-profile.html">Profile</a></li>
+        </ul>
+      </nav>
+      <button class="logout-btn">Log Out</button>
+    </aside>
+
+    <header class="header">
+      <button class="hamburger-btn" id="hamburger-btn">☰</button>
+      <a href="#" class="header-logo">Fresh Cart</a>
+    </header>
+
+    <main class="main-content">
+      <h1 class="page-title">Choose Payment Method</h1>
+      <div class="payment-options-card">
+        <form id="payment-form">
+          <h2>Payment for Order #<span id="order-id-display">...</span></h2>
+          <p style="margin-bottom:1.5rem;">Grand Total: <span style="font-weight:600;" id="total-amount-display">₹0.00</span></p>
+
+          <div class="payment-methods">
+            <button type="button" class="payment-method-btn" data-method="card">Credit/Debit Card</button>
+            <button type="button" class="payment-method-btn" data-method="upi">UPI</button>
+            <button type="button" class="payment-method-btn" data-method="cod">Cash on Delivery</button>
+          </div>
+
+          <div id="card-form" class="hidden">
+            <div class="form-group"><label>Card Number</label><input type="text" id="card-number" placeholder="XXXX-XXXX-XXXX-XXXX"></div>
+            <div class="form-group"><label>Expiry Date</label><input type="text" id="expiry-date" placeholder="MM/YY"></div>
+            <div class="form-group"><label>CVV</label><input type="text" id="cvv" placeholder="CVV"></div>
+          </div>
+
+          <div id="upi-form" class="hidden">
+            <div class="form-group"><label>UPI ID</label><input type="text" id="upi-id" placeholder="yourname@upi"></div>
+          </div>
+
+          <button type="submit" class="btn-primary" id="place-order-btn" style="margin-top:1rem;">Place Order</button>
+        </form>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    const API_BASE = "http://127.0.0.1:5000";
+    const sidebar = document.getElementById("sidebar");
+    const hamburgerBtn = document.getElementById("hamburger-btn");
+    const logoutBtn = document.querySelector(".logout-btn");
+
+    const orderIdDisplay = document.getElementById("order-id-display");
+    const totalAmountDisplay = document.getElementById("total-amount-display");
+    const paymentForm = document.getElementById("payment-form");
+    const paymentButtons = document.querySelectorAll(".payment-method-btn");
+    const cardForm = document.getElementById("card-form");
+    const upiForm = document.getElementById("upi-form");
+
+    let selectedMethod = null;
+
+    function loadOrderSummary() {
+      const orderId = localStorage.getItem("order_id") || "N/A";
+      const grandTotal = localStorage.getItem("checkout_grand_total") || "0";
+      orderIdDisplay.textContent = orderId;
+      totalAmountDisplay.textContent = "₹" + parseFloat(grandTotal).toFixed(2);
+    }
+
+    function toggleRequiredInputs(method) {
+      document.querySelectorAll("#card-form input, #upi-form input").forEach(inp => inp.required = false);
+      if (method === "card") document.querySelectorAll("#card-form input").forEach(inp => inp.required = true);
+      if (method === "upi") document.querySelectorAll("#upi-form input").forEach(inp => inp.required = true);
+    }
+
+    paymentButtons.forEach(btn => {
+      btn.addEventListener("click", () => {
+        paymentButtons.forEach(b => b.classList.remove("selected"));
+        btn.classList.add("selected");
+        selectedMethod = btn.dataset.method;
+
+        cardForm.classList.add("hidden");
+        upiForm.classList.add("hidden");
+        if (selectedMethod === "card") cardForm.classList.remove("hidden");
+        if (selectedMethod === "upi") upiForm.classList.remove("hidden");
+        toggleRequiredInputs(selectedMethod);
+      });
+    });
+
+    async function updatePayment(orderId, status) {
+      try {
+        const res = await fetch(`${API_BASE}/update_payment/${orderId}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ status })
+        });
+        return res.ok;
+      } catch {
+        return false;
+      }
+    }
+
+    paymentForm.addEventListener("submit", async e => {
+      e.preventDefault();
+      const orderId = localStorage.getItem("order_id");
+      if (!selectedMethod) return alert("Please select a payment method.");
+
+      const btn = document.getElementById("place-order-btn");
+      btn.disabled = true;
+      btn.textContent = "Processing...";
+
+      let status = selectedMethod === "cod" ? "Pending" : "Paid";
+      await updatePayment(orderId, status);
+      localStorage.setItem("payment_status", status);
+
+      window.location.href = "shopowner-order-confirmation.html";
+    });
+
+    document.addEventListener("DOMContentLoaded", () => {
+      loadOrderSummary();
+      toggleRequiredInputs(null);
+      hamburgerBtn.addEventListener("click", () => sidebar.classList.toggle("active"));
+      logoutBtn.addEventListener("click", () => {
+        localStorage.clear();
+        window.location.href = "fresh-cart-home.html";
+      });
+    });
+  </script>
+</body>
+</html>

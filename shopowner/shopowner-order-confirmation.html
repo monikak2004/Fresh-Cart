@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Order Confirmation</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary-dark: #333333;
+      --secondary-light: #f5f5f5;
+      --card-bg: #ffffff;
+      --text-dark: #222222;
+      --text-light: #555555;
+      --border-color: #dddddd;
+      --font-heading: 'Montserrat', sans-serif;
+      --font-body: 'Roboto', sans-serif;
+    }
+    body {
+      font-family: var(--font-body);
+      background-color: var(--secondary-light);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      color: var(--text-dark);
+    }
+    .confirmation-box {
+      background-color: var(--card-bg);
+      padding: 2.5rem;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      max-width: 600px;
+      width: 90%;
+      text-align: center;
+    }
+    .confirmation-box h1 {
+      font-family: var(--font-heading);
+      color: var(--primary-dark);
+      margin-bottom: 1rem;
+    }
+    .receipt {
+      text-align: left;
+      margin-top: 1.5rem;
+      border-top: 1px solid var(--border-color);
+      padding-top: 1rem;
+    }
+    .receipt p {
+      margin: 0.5rem 0;
+      font-size: 0.95rem;
+      color: var(--text-light);
+    }
+    .btn-go-home {
+      margin-top: 2rem;
+      display: inline-block;
+      padding: 0.75rem 1.5rem;
+      background-color: var(--primary-dark);
+      color: var(--card-bg);
+      border-radius: 8px;
+      font-weight: 600;
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="confirmation-box">
+    <h1>✅ Order Placed Successfully!</h1>
+    <p>Thank you for your order. Here are your order details:</p>
+<div id="order-summary" style="text-align:center; margin-top: 5rem;">
+  <h2 style="color:#333;">✅ Order Confirmed!</h2>
+  <p><strong>Order ID:</strong> <span id="order-id">--</span></p>
+  <p><strong>Status:</strong> <span id="order-status">--</span></p>
+  <p><strong>Payment Status:</strong> <span id="payment-status">--</span></p>
+  <p><strong>Distributor:</strong> <span id="distributor-name">--</span></p>
+  <p><strong>Total Amount:</strong> <span id="order-total">--</span></p>
+  <p><strong>Order Date:</strong> <span id="order-date">--</span></p>
+
+  <button onclick="window.location.href='shopowner-orders.html'" 
+          style="margin-top:1.5rem; padding:0.8rem 2rem; 
+          background:#333; color:white; border:none; border-radius:8px; cursor:pointer;">
+    View My Orders
+  </button>
+</div>
+
+
+    <a href="shopowner-dashboard.html" class="btn-go-home">Go to Dashboard</a>
+  </div>
+ 
+
+
+<script>
+const API_BASE = "http://127.0.0.1:5000";
+const user = JSON.parse(localStorage.getItem("fc_user") || "{}");
+const orderId = localStorage.getItem("order_id");
+
+async function loadOrderDetails() {
+  if (!orderId || !user.user_id) {
+    alert("Order not found. Redirecting to orders page...");
+    window.location.href = "shopowner-orders.html";
+    return;
+  }
+
+  try {
+    // Fetch all orders for this user
+    const res = await fetch(`${API_BASE}/orders/${user.user_id}`);
+    const orders = await res.json();
+
+    // Find the current order
+    const order = orders.find(o => o.order_id == orderId);
+    const distributor = JSON.parse(localStorage.getItem("selected_distributor") || "{}");
+
+    // If order not found
+    if (!order) {
+      document.getElementById("order-summary").innerHTML = `
+        <p style="color:#b00;">No details found for Order #${orderId}</p>`;
+      return;
+    }
+
+    // ✅ Populate order confirmation details
+    document.getElementById("order-id").textContent = order.order_id;
+    document.getElementById("order-status").textContent = order.status;
+    document.getElementById("payment-status").textContent = order.payment_status;
+    document.getElementById("order-total").textContent = "₹" + (order.total_amount || order.amount);
+    document.getElementById("order-date").textContent = new Date(order.order_date).toLocaleString();
+    document.getElementById("distributor-name").textContent = distributor.name || "Fresh Distributor";
+
+  } catch (err) {
+    console.error("❌ Error fetching order:", err);
+    document.getElementById("order-summary").innerHTML = `<p style="color:#b00;">Failed to load order details.</p>`;
+  }
+}
+
+document.addEventListener("DOMContentLoaded", loadOrderDetails);
+</script>
+
+
+  </script>
+</body>
+</html>

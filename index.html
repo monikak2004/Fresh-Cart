@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0">
+ <title>FreshCart</title>
+ <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+ <style>
+ :root {
+ --bg-light: #ffffff;
+ --text-dark: #222222;
+ --cart-color: #333333;
+ --loading-color: #777777;
+ }
+
+ body {
+ margin: 0;
+ font-family: 'Playfair Display', serif;
+ display: flex;
+ justify-content: center;
+ align-items: center;
+ height: 100vh;
+ background-color: var(--bg-light);
+ overflow: hidden;
+ }
+
+ .container {
+ text-align: center;
+ }
+
+ .title {
+ font-size: 4em;
+ color: var(--text-dark);
+ margin-bottom: 40px;
+ opacity: 0;
+ animation: fadeIn 1s ease-in-out forwards;
+ }
+
+.cart {
+ font-size: 9em;
+ color: var(--cart-color);
+ display: inline-block;
+ animation: moveCart 4s ease-out 1.5s forwards;
+ opacity: 0;
+}
+ 
+ .loading-text {
+ font-size: 1.2em;
+ color: var(--loading-color);
+ opacity: 0;
+ margin-top: 20px;
+ animation: fadeIn 1s ease-in-out 0.5s forwards,
+pulse 1.5s infinite 1.5s;
+ }
+
+ @keyframes fadeIn {
+ 0% { opacity: 0; }
+ 100% { opacity: 1; }
+  }
+ 
+ @keyframes moveCart {
+ 0% { transform: translateX(0); opacity: 1; }
+100% { transform: translateX(110vw); opacity: 0; }
+ }
+ 
+ @keyframes pulse {
+0%, 100% { transform: scale(1); opacity: 1; }
+ 50% { transform: scale(1.05); opacity: 0.8; }
+ }
+ </style>
+</head>
+<body>
+ <div class="container">
+    <h1 class="title">FreshCart</h1>
+    <div class="cart" id="cart">🛒</div>
+    <div class="loading-text">Loading...</div>
+  </div>
+
+  <script>
+    const cart = document.getElementById("cart");
+    cart.addEventListener("animationend", () => {
+      window.location.href = "selection.html";
+    });
+    
+    // Fallback for browsers that don't support animationend
+    setTimeout(() => {
+      window.location.href = "selection.html";
+ }, 6000); // 6 seconds, slightly longer than the total animation
+ </script>
+</body>
+</html>

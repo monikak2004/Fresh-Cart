@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fresh Cart - Distributor Profile</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        /* --- General Styles & Variables --- */
+        :root {
+            --primary-dark: #333333;
+            --secondary-light: #f5f5f5;
+            --card-bg: #ffffff;
+            --text-dark: #222222;
+            --text-light: #555555;
+            --border-color: #dddddd;
+            --font-heading: 'Montserrat', sans-serif;
+            --font-body: 'Roboto', sans-serif;
+
+            --add-color: #28a745;
+            --edit-color: #007bff;
+            --delete-color: #dc3545;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-body);
+            color: var(--text-dark);
+            line-height: 1.6;
+            background-color: var(--secondary-light);
+            display: flex;
+        }
+
+        h1, h2, h3, h4 {
+            font-family: var(--font-heading);
+        }
+
+        .dashboard-wrapper {
+            display: flex;
+            min-height: 100vh;
+            width: 100%;
+        }
+
+        /* --- Sidebar Navigation --- */
+        .sidebar {
+            width: 250px;
+            background-color: var(--primary-dark);
+            height: 100vh;
+            position: fixed;
+            top: 0;
+            left: -250px;
+            transition: left 0.3s ease-in-out;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+        }
+
+        .sidebar.active {
+            left: 0;
+        }
+
+        .logo {
+            padding: 2rem 1rem;
+            text-align: center;
+            color: var(--secondary-light);
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        .main-nav {
+            list-style: none;
+            padding: 0;
+            flex-grow: 1;
+        }
+
+        .main-nav ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .nav-item a {
+            display: block;
+            padding: 1rem 2rem;
+            color: var(--secondary-light);
+            text-decoration: none;
+            transition: background-color 0.2s;
+            font-weight: 500;
+        }
+
+        .nav-item a.active,
+        .nav-item a:hover {
+            background-color: #555555;
+        }
+
+        .logout-btn {
+            width: 100%;
+            padding: 1rem;
+            background-color: #e0e0e0;
+            color: var(--text-dark);
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            transition: background-color 0.2s;
+        }
+
+        .logout-btn:hover {
+            background-color: #cccccc;
+        }
+
+        /* --- Hamburger Menu & Header --- */
+        .dashboard-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 1rem;
+            background-color: var(--card-bg);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            z-index: 1001;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .hamburger-btn {
+            font-size: 2rem;
+            cursor: pointer;
+            color: var(--primary-dark);
+            background: none;
+            border: none;
+            display: block;
+        }
+        
+        .header-title {
+            font-size: 1.5rem;
+            color: var(--primary-dark);
+        }
+
+        /* --- Main Content Area --- */
+        .content-area {
+            flex-grow: 1;
+            padding: 2rem;
+            padding-top: 6rem;
+            transition: margin-left 0.3s ease-in-out;
+        }
+
+        .sidebar.active ~ .content-area {
+            margin-left: 250px;
+        }
+
+        .page-title {
+            color: var(--primary-dark);
+            margin-bottom: 2rem;
+        }
+
+        /* --- Profile Page Styles --- */
+        .profile-container {
+            background-color: var(--card-bg);
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .profile-container h2 {
+            font-family: var(--font-body);
+            font-weight: 500;
+            margin-bottom: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.5rem;
+        }
+        
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+
+        .form-group input, .form-group textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-family: inherit;
+        }
+        
+        .form-group input:disabled {
+            background-color: #f1f1f1;
+            color: var(--text-light);
+            cursor: not-allowed;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-dark);
+            color: var(--card-bg);
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .btn-primary:hover {
+            background-color: #555555;
+        }
+
+        .password-change-section {
+            margin-top: 2rem;
+            border-top: 1px solid var(--border-color);
+            padding-top: 1.5rem;
+            text-align: center;
+        }
+        
+        .password-change-section h4 {
+            margin-bottom: 1rem;
+        }
+
+        /* --- Responsive Design --- */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 100%;
+                left: -100%;
+            }
+            .sidebar.active {
+                left: 0;
+            }
+            .content-area {
+                padding: 1rem;
+                padding-top: 5rem;
+                margin-left: 0;
+            }
+            .sidebar.active ~ .content-area {
+                margin-left: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-wrapper">
+        <aside class="sidebar" id="sidebar">
+            <div class="logo">Fresh Cart</div>
+            <nav class="main-nav">
+                <ul>
+                    <li class="nav-item"><a href="distributor-dashboard.html">Dashboard</a></li>
+                    <li class="nav-item"><a href="distributor-orders.html">Orders</a></li>
+                    <li class="nav-item"><a href="distributor-products.html">Products</a></li>
+                    <li class="nav-item"><a href="distributor-payments.html">Payments</a></li>
+                    <li class="nav-item active"><a href="distributor-profile.html">Profile</a></li>
+                </ul>
+            </nav>
+            <button class="logout-btn">Log Out</button>
+        </aside>
+
+        <header class="dashboard-header">
+            <button class="hamburger-btn" id="hamburger-btn">☰</button>
+            <div class="header-title">Fresh Cart</div>
+        </header>
+
+        <main class="content-area">
+            <h1 class="page-title">Profile</h1>
+            <div class="profile-container">
+                <h2>Personal Information</h2>
+                <form id="profile-form">
+                    <div class="form-group">
+                        <label for="profile-name">Name</label>
+                        <input type="text" id="profile-name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="profile-email">Email</label>
+                        <input type="email" id="profile-email" disabled>
+                    </div>
+                    <div class="form-group">
+                        <label for="profile-phone">Phone</label>
+                        <input type="tel" id="profile-phone">
+                    </div>
+                    <div class="form-group">
+                        <label for="profile-address">Business Address</label>
+                        <textarea id="profile-address"></textarea>
+                    </div>
+                    <button type="submit" class="btn-primary">Update Profile</button>
+                </form>
+                <div class="password-change-section">
+                    <h4>Change Your Password</h4>
+                    <button class="btn-primary" id="change-password-btn">Change Password</button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+ <script>
+const API_BASE = "http://127.0.0.1:5000";
+const user = JSON.parse(localStorage.getItem("fc_user") || "{}");
+
+// --- DOM Elements ---
+const sidebar = document.getElementById('sidebar');
+const hamburgerBtn = document.getElementById('hamburger-btn');
+const profileForm = document.getElementById('profile-form');
+const profileNameInput = document.getElementById('profile-name');
+const profileEmailInput = document.getElementById('profile-email');
+const profilePhoneInput = document.getElementById('profile-phone');
+const profileAddressInput = document.getElementById('profile-address');
+const changePasswordBtn = document.getElementById('change-password-btn');
+const logoutBtn = document.querySelector('.logout-btn');
+
+// ==============================
+// 1️⃣ Load distributor profile
+// ==============================
+async function loadProfile() {
+  if (!user.user_id) {
+    alert("Please log in again.");
+    window.location.href = "fresh-cart-login.html";
+    return;
+  }
+
+  try {
+    const res = await fetch(`${API_BASE}/user/${user.user_id}`);
+    const data = await res.json();
+
+    if (!res.ok) throw new Error(data.error || "Failed to load profile");
+
+    profileNameInput.value = data.name || "";
+    profileEmailInput.value = data.email || "";
+    profilePhoneInput.value = data.contact_no || "";
+    profileAddressInput.value = data.address || "";
+
+  } catch (err) {
+    console.error("❌ Error loading profile:", err);
+    alert("Failed to load profile.");
+  }
+}
+
+// ==============================
+// 2️⃣ Update distributor profile
+// ==============================
+profileForm.addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  const updatedProfile = {
+    name: profileNameInput.value.trim(),
+    contact_no: profilePhoneInput.value.trim(),
+    address: profileAddressInput.value.trim()
+  };
+
+  try {
+    const res = await fetch(`${API_BASE}/user/${user.user_id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(updatedProfile)
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) throw new Error(data.error || "Failed to update profile");
+
+    alert("✅ Profile updated successfully!");
+  } catch (err) {
+    console.error("❌ Error updating profile:", err);
+    alert("Failed to update profile.");
+  }
+});
+
+// ==============================
+// 3️⃣ Sidebar + Misc Controls
+// ==============================
+document.addEventListener("DOMContentLoaded", () => {
+  loadProfile();
+
+  hamburgerBtn?.addEventListener('click', () => {
+    sidebar.classList.toggle('active');
+  });
+
+  logoutBtn?.addEventListener('click', () => {
+    localStorage.clear();
+    window.location.href = 'fresh-cart-home.html';
+  });
+
+  changePasswordBtn?.addEventListener('click', () => {
+    alert('Password change functionality coming soon.');
+  });
+});
+</script>
+
+</body>
+</html>

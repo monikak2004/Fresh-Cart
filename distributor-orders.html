@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Fresh Cart - Distributor Orders</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --primary-dark:#333333;--secondary-light:#f5f5f5;--card-bg:#ffffff;
+      --text-dark:#222222;--text-light:#555555;--border-color:#dddddd;
+      --font-heading:'Montserrat',sans-serif;--font-body:'Roboto',sans-serif;
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:var(--font-body);color:var(--text-dark);line-height:1.6;background-color:var(--secondary-light);display:flex}
+    h1,h2,h3,h4{font-family:var(--font-heading)}
+    .dashboard-wrapper{display:flex;min-height:100vh;width:100%}
+
+    /* Sidebar */
+    .sidebar{width:250px;background-color:var(--primary-dark);height:100vh;position:fixed;top:0;left:-250px;transition:left .3s ease-in-out;display:flex;flex-direction:column;box-shadow:2px 0 10px rgba(0,0,0,.2);z-index:1000}
+    .sidebar.active{left:0}
+    .logo{padding:2rem 1rem;text-align:center;color:var(--secondary-light);font-size:1.5rem;font-weight:bold}
+    .main-nav ul{list-style:none;padding:0}
+    .nav-item a{display:block;padding:1rem 2rem;color:var(--secondary-light);text-decoration:none;transition:background-color .2s;font-weight:500}
+    .nav-item a.active,.nav-item a:hover{background-color:#555555}
+    .logout-btn{width:100%;padding:1rem;background-color:#e0e0e0;color:var(--text-dark);border:none;cursor:pointer;font-size:1rem;font-weight:500;transition:background-color .2s}
+    .logout-btn:hover{background-color:#cccccc}
+
+    /* Header */
+    .dashboard-header{position:fixed;top:0;left:0;width:100%;padding:1rem;background-color:var(--card-bg);box-shadow:0 2px 5px rgba(0,0,0,.1);z-index:1001;display:flex;align-items:center;justify-content:space-between}
+    .hamburger-btn{font-size:2rem;cursor:pointer;color:var(--primary-dark);background:none;border:none;display:block}
+    .header-title{font-size:1.5rem;color:var(--primary-dark)}
+
+    /* Content */
+    .content-area{flex-grow:1;padding:2rem;padding-top:6rem;transition:margin-left .3s ease-in-out}
+    .sidebar.active~.content-area{margin-left:250px}
+    .page-title{color:var(--primary-dark);margin-bottom:2rem}
+
+    /* Controls */
+    .search-filter-container{display:flex;justify-content:space-between;align-items:center;gap:1rem;margin-bottom:1rem;flex-wrap:wrap}
+    .search-filter-container input,.search-filter-container select{flex:1;min-width:150px;padding:.75rem;border:1px solid var(--border-color);border-radius:8px;font-family:inherit}
+    .search-filter-container input:focus,.search-filter-container select:focus{outline:none;border-color:var(--primary-dark)}
+    .toggle-row{display:flex;gap:.5rem;margin-bottom:1.5rem}
+
+    /* Buttons */
+    .btn-primary{background-color:#454545;color:#fff;padding:.75rem 1.5rem;border:none;border-radius:8px;font-weight:600;cursor:pointer;transition:background-color .2s}
+    .btn-primary:hover{background-color:#222}
+    .btn-secondary{background-color:var(--border-color);color:var(--text-dark);padding:.75rem 1.5rem;border:none;border-radius:8px;font-weight:600;cursor:pointer;transition:background-color .2s}
+    .btn-secondary:hover{background-color:#ccc}
+
+    /* Orders grid */
+    .order-container{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:1.5rem}
+    .order-card{background-color:var(--card-bg);padding:1.5rem;border-radius:16px;box-shadow:0 4px 10px rgba(0,0,0,.1);transition:transform .2s ease,box-shadow .2s ease}
+    .order-card:hover{transform:translateY(-5px);box-shadow:0 6px 15px rgba(0,0,0,.15)}
+    .order-header{display:flex;justify-content:space-between;align-items:center;font-weight:500}
+    .order-status{padding:.25rem .75rem;border-radius:6px;font-weight:600;text-transform:capitalize;font-size:.9rem}
+    .status-pending{background-color:#fff3e0;color:#e65100}
+    .status-accepted{background-color:#e0e0e0;color:#000}
+    .status-declined{background-color:#fce4ec;color:#ad1457}
+    .status-shipped{background-color:#cfd8dc;color:#455a64}
+    .status-delivered{background-color:#b0bec5;color:#37474f}
+    .order-details{padding-top:1rem;border-top:1px dashed var(--border-color);margin-top:1rem}
+    .action-buttons{display:flex;gap:.5rem;margin-top:1rem}
+
+    @media (max-width:768px){
+      .sidebar{width:100%;left:-100%}
+      .sidebar.active{left:0}
+      .content-area{padding:1rem;padding-top:5rem;margin-left:0}
+      .sidebar.active~.content-area{margin-left:0}
+    }
+  </style>
+</head>
+<body class="dashboard-page">
+  <div class="dashboard-wrapper">
+    <aside class="sidebar" id="sidebar">
+      <div class="logo">Fresh Cart</div>
+      <nav class="main-nav">
+        <ul>
+          <li class="nav-item"><a href="distributor-dashboard.html">Dashboard</a></li>
+          <li class="nav-item active"><a href="distributor-orders.html">Orders</a></li>
+          <li class="nav-item"><a href="distributor-products.html">Products</a></li>
+          <li class="nav-item"><a href="distributor-payments.html">Payments</a></li>
+          <li class="nav-item"><a href="distributor-profile.html">Profile</a></li>
+        </ul>
+      </nav>
+      <button class="logout-btn">Log Out</button>
+    </aside>
+
+    <header class="dashboard-header">
+      <button class="hamburger-btn" id="hamburger-btn">☰</button>
+      <div class="header-title">Fresh Cart</div>
+    </header>
+
+    <main class="content-area">
+      <h1 class="page-title">Orders</h1>
+
+      <!-- Controls stay OUTSIDE order-list so they don't get wiped -->
+      <div class="search-filter-container">
+        <input type="text" id="searchInput" placeholder="Search by order # or shop name">
+        <select id="statusFilter">
+          <option value="all">All Statuses</option>
+          <option value="pending">Pending</option>
+          <option value="accepted">Accepted</option>
+          <option value="shipped">Shipped</option>
+          <option value="delivered">Delivered</option>
+          <option value="declined">Declined</option>
+        </select>
+      </div>
+
+      <div class="toggle-row">
+        <button id="activeOrdersBtn"  class="btn-primary">Active Orders</button>
+        <button id="deletedOrdersBtn" class="btn-secondary">Deleted Orders</button>
+      </div>
+
+      <div class="order-container" id="order-list"></div>
+    </main>
+  </div>
+
+  <script>
+    const API_BASE = "http://127.0.0.1:5000";
+    const user = JSON.parse(localStorage.getItem("fc_user") || "{}");
+
+    const sidebar       = document.getElementById('sidebar');
+    const hamburgerBtn  = document.getElementById('hamburger-btn');
+    const orderList     = document.getElementById('order-list');
+    const searchInput   = document.getElementById('searchInput');
+    const statusFilter  = document.getElementById('statusFilter');
+    const activeBtn     = document.getElementById('activeOrdersBtn');
+    const deletedBtn    = document.getElementById('deletedOrdersBtn');
+
+    let orders = [];
+    let showDeleted = false;
+    let pollTimer = null;
+    let isUpdating = false; // prevent poll clobber during update
+
+    // Sidebar toggle
+    hamburgerBtn?.addEventListener('click', () => {
+      sidebar.classList.toggle('active');
+    });
+
+    // Load orders (active or deleted)
+    async function loadOrders(silent = false) {
+      if (!user?.user_id) {
+        if (!silent) alert("Please log in again.");
+        return;
+      }
+      const endpoint = showDeleted
+        ? `/distributor/deleted_orders/${user.user_id}`
+        : `/distributor/orders/${user.user_id}`;
+
+      try {
+        const res = await fetch(`${API_BASE}${endpoint}`);
+        const data = await res.json();
+
+        // Normalize
+        orders = (Array.isArray(data) ? data : []).map(o => ({
+          id: o.order_id,
+          shopkeeper: o.shop_owner,
+          total: o.amount,
+          rawStatus: o.status || "Pending",
+          status: (o.status || "Pending").toLowerCase(),
+          date: (o.order_date || "").toString(),
+          delete_date: o.delete_date || null
+        }));
+
+        renderOrders();
+      } catch (err) {
+        if (!silent) console.error("❌ Failed to fetch orders:", err);
+      }
+    }
+
+    // Render cards from filtered list
+    function renderOrders() {
+      const q = (searchInput.value || "").toLowerCase();
+      const f = (statusFilter.value || "all").toLowerCase();
+
+      orderList.innerHTML = "";
+
+      const filtered = orders.filter(o =>
+        (f === "all" || o.status === f) &&
+        (String(o.id).includes(q) || (o.shopkeeper || "").toLowerCase().includes(q))
+      );
+
+      if (filtered.length === 0) {
+        orderList.innerHTML = `<p style="text-align:center;">No ${showDeleted ? "deleted" : "active"} orders found.</p>`;
+        return;
+      }
+
+      filtered.forEach(order => {
+        const statusClass = `status-${order.status}`;
+        const dateStr = order.date ? order.date.toString().split("T")[0] : "-";
+
+        const card = document.createElement('div');
+        card.className = 'order-card';
+        card.innerHTML = `
+          <div class="order-header">
+            <span class="order-id">Order #${order.id}</span>
+            <span class="order-status ${statusClass}">${order.status}</span>
+          </div>
+          <div class="order-details">
+            <p><strong>Shopkeeper:</strong> ${order.shopkeeper || "-"}</p>
+            <p><strong>Date:</strong> ${dateStr}</p>
+            <p><strong>Total:</strong> ₹${order.total}</p>
+            <div class="action-buttons">
+              ${buildActions(order)}
+            </div>
+          </div>
+        `;
+        orderList.appendChild(card);
+      });
+    }
+
+    // Build action buttons based on status + view
+    function buildActions(order) {
+      if (showDeleted) {
+        return `<button class="btn-primary" data-restore-id="${order.id}">Restore</button>`;
+      }
+      switch (order.status) {
+        case "pending":
+          return `
+            <button class="btn-primary"   data-action="Accepted" data-id="${order.id}">Accept</button>
+            <button class="btn-secondary" data-action="Declined" data-id="${order.id}">Decline</button>
+            <button class="btn-secondary" data-delete-id="${order.id}">Delete</button>
+          `;
+        case "accepted":
+          return `<button class="btn-primary" data-action="Shipped" data-id="${order.id}">Mark as Shipped</button>`;
+        case "shipped":
+          return `<button class="btn-primary" data-action="Delivered" data-id="${order.id}">Mark as Delivered</button>`;
+        default:
+          return ""; // delivered / declined
+      }
+    }
+
+    // Event delegation for all buttons inside order list
+    orderList.addEventListener('click', async (e) => {
+      const actionBtn  = e.target.closest('[data-action]');
+      const deleteBtn  = e.target.closest('[data-delete-id]');
+      const restoreBtn = e.target.closest('[data-restore-id]');
+      if (!actionBtn && !deleteBtn && !restoreBtn) return;
+
+      try {
+        isUpdating = true; // pause poll render during update
+
+        if (actionBtn) {
+          const id = actionBtn.getAttribute('data-id');
+          const newStatus = actionBtn.getAttribute('data-action');
+          await updateStatus(id, newStatus);
+        } else if (deleteBtn) {
+          const id = deleteBtn.getAttribute('data-delete-id');
+          if (!confirm(`Delete order #${id}? It will be kept for 30 days.`)) return;
+          await softDelete(id);
+        } else if (restoreBtn) {
+          const id = restoreBtn.getAttribute('data-restore-id');
+          await restoreOrder(id);
+        }
+      } finally {
+        await loadOrders(true);
+        isUpdating = false;
+      }
+    });
+
+    // Update status API
+    async function updateStatus(orderId, status) {
+      const res = await fetch(`${API_BASE}/distributor/update_status/${orderId}`, {
+        method:"PUT",
+        headers:{ "Content-Type":"application/json" },
+        body: JSON.stringify({ status })
+      });
+      if (!res.ok) {
+        const t = await res.text();
+        throw new Error(t || "Failed to update status");
+      }
+    }
+
+    // Soft delete API
+    async function softDelete(orderId) {
+      const res = await fetch(`${API_BASE}/distributor/delete_order/${orderId}`, { method:"PUT" });
+      if (!res.ok) throw new Error("Delete failed");
+    }
+
+    // Restore API
+    async function restoreOrder(orderId) {
+      const res = await fetch(`${API_BASE}/distributor/restore_order/${orderId}`, { method:"PUT" });
+      if (!res.ok) throw new Error("Restore failed");
+    }
+
+    // Controls
+    searchInput?.addEventListener('input', renderOrders);
+    statusFilter?.addEventListener('change', renderOrders);
+
+    activeBtn?.addEventListener('click', () => {
+      showDeleted = false;
+      activeBtn.className = "btn-primary";
+      deletedBtn.className = "btn-secondary";
+      loadOrders();
+    });
+
+    deletedBtn?.addEventListener('click', () => {
+      showDeleted = true;
+      activeBtn.className = "btn-secondary";
+      deletedBtn.className = "btn-primary";
+      loadOrders();
+    });
+
+    // Polling for live updates
+    function startPolling() {
+      stopPolling();
+      pollTimer = setInterval(() => {
+        if (!isUpdating) loadOrders(true);
+      }, 6000);
+    }
+    function stopPolling() {
+      if (pollTimer) clearInterval(pollTimer);
+      pollTimer = null;
+    }
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) stopPolling(); else startPolling();
+    });
+
+    // Init
+    document.addEventListener('DOMContentLoaded', async () => {
+      await loadOrders();
+      startPolling();
+    });
+    function buildActions(order) {
+  if (showDeleted) {
+    return `<button class="btn-primary" data-restore-id="${order.id}">Restore</button>`;
+  }
+
+  switch (order.status) {
+    case "pending":
+      return `
+        <button class="btn-primary" data-action="Accepted" data-id="${order.id}">Accept</button>
+        <button class="btn-secondary" data-action="Declined" data-id="${order.id}">Decline</button>
+        <button class="btn-secondary" data-delete-id="${order.id}">Delete</button>
+      `;
+    case "accepted":
+      return `<button class="btn-primary" data-action="Shipped" data-id="${order.id}">Mark as Shipped</button>`;
+    case "shipped":
+      return `<button class="btn-primary" data-action="Out for Delivery" data-id="${order.id}">Out for Delivery</button>`;
+    case "out for delivery":
+      return `<button class="btn-primary" data-action="Delivered" data-id="${order.id}">Mark as Delivered</button>`;
+    default:
+      return ""; // delivered / declined
+  }
+}
+
+  </script>
+</body>
+</html>

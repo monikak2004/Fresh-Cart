@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fresh Cart - Shopowner Orders</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        /* --- General Styles & Variables --- */
+        :root {
+            --primary-dark: #333333;
+            --secondary-light: #f5f5f5;
+            --card-bg: #ffffff;
+            --text-dark: #222222;
+            --text-light: #555555;
+            --border-color: #dddddd;
+            --font-heading: 'Montserrat', sans-serif;
+            --font-body: 'Roboto', sans-serif;
+
+            --add-color: #28a745;
+            --edit-color: #007bff;
+            --delete-color: #dc3545;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-body);
+            color: var(--text-dark);
+            line-height: 1.6;
+            background-color: var(--secondary-light);
+            display: flex;
+        }
+
+        h1, h2, h3, h4 {
+            font-family: var(--font-heading);
+        }
+
+        .dashboard-wrapper {
+            display: flex;
+            min-height: 100vh;
+            width: 100%;
+        }
+
+        /* --- Sidebar Navigation --- */
+        .sidebar {
+            width: 250px;
+            background-color: var(--primary-dark);
+            height: 100vh;
+            position: fixed;
+            top: 0;
+            left: -250px;
+            transition: left 0.3s ease-in-out;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+        }
+
+        .sidebar.active {
+            left: 0;
+        }
+
+        .logo {
+            padding: 2rem 1rem;
+            text-align: center;
+            color: var(--secondary-light);
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        .main-nav {
+            list-style: none;
+            padding: 0;
+            flex-grow: 1;
+        }
+
+        .main-nav ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .nav-item a {
+            display: block;
+            padding: 1rem 2rem;
+            color: var(--secondary-light);
+            text-decoration: none;
+            transition: background-color 0.2s;
+            font-weight: 500;
+        }
+
+        .nav-item a.active,
+        .nav-item a:hover {
+            background-color: #555555;
+        }
+
+        .logout-btn {
+            width: 100%;
+            padding: 1rem;
+            background-color: #e0e0e0;
+            color: var(--text-dark);
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            transition: background-color 0.2s;
+        }
+
+        .logout-btn:hover {
+            background-color: #cccccc;
+        }
+
+        /* --- Hamburger Menu & Header --- */
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 1rem 2rem;
+            background-color: var(--card-bg);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            z-index: 1001;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .hamburger-btn {
+            font-size: 2rem;
+            cursor: pointer;
+            color: var(--primary-dark);
+            background: none;
+            border: none;
+            display: block;
+            position: absolute;
+            left: 1rem;
+        }
+
+        .header-logo {
+            font-family: var(--font-heading);
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--primary-dark);
+            text-decoration: none;
+            margin-left: 2rem;
+        }
+
+        .header-controls {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+        
+        .header-controls-link {
+            font-size: 1.5rem;
+            color: var(--primary-dark);
+            text-decoration: none;
+            position: relative;
+        }
+
+        /* --- Main Content Area --- */
+        .main-content {
+            padding: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding-top: 6rem;
+            width: 100%;
+        }
+
+        .page-title {
+            color: var(--primary-dark);
+            margin-bottom: 2rem;
+        }
+
+        /* --- Order Page Styles --- */
+        .order-filters {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .order-filters select {
+            flex: 1;
+            min-width: 150px;
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-family: inherit;
+        }
+        
+        .order-table-container {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            overflow-x: auto;
+        }
+        
+        .orders-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+            text-align: left;
+        }
+
+        .orders-table thead {
+            background-color: #f1f1f1;
+        }
+
+        .orders-table th,
+        .orders-table td {
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .orders-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .orders-table tbody tr:nth-child(even) {
+            background-color: var(--secondary-light);
+        }
+        
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 6px;
+            font-weight: 600;
+            text-transform: capitalize;
+            font-size: 0.9rem;
+        }
+        
+        .status-pending { background-color: #fff3e0; color: #e65100; }
+        .status-shipped { background-color: #e0e0e0; color: #555; }
+        .status-intransit { background-color: #b3e5fc; color: #0277bd; }
+        .status-outfordelivery { background-color: #c8e6c9; color: #388e3c; }
+        .status-delivered { background-color: #dcedc8; color: #558b2f; }
+
+        /* --- Responsive Design --- */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 100%;
+                left: -100%;
+            }
+            .sidebar.active {
+                left: 0;
+            }
+            .main-content {
+                padding: 1rem;
+                padding-top: 5rem;
+                margin-left: 0;
+            }
+            .sidebar.active ~ .main-content {
+                margin-left: 0;
+            }
+            .orders-table th,
+            .orders-table td {
+                padding: 0.75rem 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-wrapper">
+        <aside class="sidebar" id="sidebar">
+            <div class="logo">Fresh Cart</div>
+            <nav class="main-nav">
+                <ul>
+                    <li class="nav-item"><a href="shopowner-dashboard.html">Dashboard</a></li>
+                    <li class="nav-item active"><a href="shopowner-catalog.html">Catalog</a></li>
+                    <li class="nav-item"><a href="shopowner-orders.html">Orders</a></li>
+                    <li class="nav-item"><a href="shopowner-payments.html">Payments</a></li>
+                    <li class="nav-item"><a href="shopowner-profile.html">Profile</a></li>
+                </ul>
+            </nav>
+            <button class="logout-btn">Log Out</button>
+        </aside>
+
+        <header class="header">
+            <button class="hamburger-btn" id="hamburger-btn">☰</button>
+            <a href="#" class="header-logo">Fresh Cart</a>
+            <div class="header-controls">
+                </div>
+        </header>
+
+        <main class="main-content">
+            <h1 class="page-title">My Orders</h1>
+            
+            <div class="order-filters">
+                <select id="statusFilter">
+                    <option value="all">All Statuses</option>
+                    <option value="pending">Pending</option>
+                    <option value="shipped">Shipped</option>
+                    <option value="intransit">In Transit</option>
+                    <option value="outfordelivery">Out for Delivery</option>
+                    <option value="delivered">Delivered</option>
+                </select>
+            </div>
+
+            <div class="order-table-container">
+                <table class="orders-table">
+                    <thead>
+                        <tr>
+                            <th>Order ID</th>
+                            <th>Distributor</th>
+                            <th>Total Price</th>
+                            <th>Date</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="orders-list">
+                        </tbody>
+                </table>
+            </div>
+        </main>
+    </div>
+<script>
+const API_BASE = "http://127.0.0.1:5000";
+const user = JSON.parse(localStorage.getItem("fc_user") || "{}");
+const ordersTable = document.getElementById("orders-list");
+const sidebar = document.getElementById("sidebar");
+const hamburgerBtn = document.getElementById("hamburger-btn");
+const logoutBtn = document.querySelector(".logout-btn");
+const statusFilter = document.getElementById("statusFilter");
+
+let orders = [];
+let refreshTimer = null;
+
+// ==============================
+// 🟢 Load Orders from Backend
+// ==============================
+async function loadOrders(showAnimation = false) {
+  try {
+    if (!user.user_id) {
+      alert("Login required. Redirecting...");
+      window.location.href = "fresh-cart-home.html";
+      return;
+    }
+
+    const res = await fetch(`${API_BASE}/orders/${user.user_id}`);
+    if (!res.ok) throw new Error(`Error fetching orders: ${res.status}`);
+
+    const data = await res.json();
+    updateOrdersUI(data, showAnimation);
+  } catch (err) {
+    console.error("❌ Failed to load orders:", err);
+    ordersTable.innerHTML = `<tr><td colspan="5" style="text-align:center;">Error loading orders.</td></tr>`;
+  }
+}
+
+// ==============================
+// 🟡 Render Orders into Table
+// ==============================
+function updateOrdersUI(newOrders, animate) {
+  const oldMap = {};
+  orders.forEach(o => (oldMap[o.order_id] = o));
+
+  ordersTable.innerHTML = "";
+
+  if (!newOrders || newOrders.length === 0) {
+    ordersTable.innerHTML = `<tr><td colspan="5" style="text-align:center;">No orders yet.</td></tr>`;
+    return;
+  }
+
+  const filter = statusFilter.value.toLowerCase();
+  const filtered = filter === "all"
+    ? newOrders
+    : newOrders.filter(o => (o.status || "").toLowerCase() === filter);
+
+  filtered.forEach(order => {
+    const isChanged = animate && oldMap[order.order_id] && oldMap[order.order_id].status !== order.status;
+
+    const row = document.createElement("tr");
+    if (isChanged) {
+      row.style.transition = "background-color 0.5s ease";
+      row.style.backgroundColor = "#e7ffe7"; // light green flash
+      setTimeout(() => (row.style.backgroundColor = ""), 700);
+    }
+
+    row.innerHTML = `
+      <td>${order.order_id}</td>
+      <td>${order.distributor_name || "—"}</td>
+      <td>₹${order.total_amount || order.amount}</td>
+      <td>${new Date(order.order_date).toLocaleString()}</td>
+      <td><span class="status-badge status-${(order.status || "pending").toLowerCase()}">${order.status}</span></td>
+    `;
+    ordersTable.appendChild(row);
+  });
+
+  orders = newOrders;
+}
+
+// ==============================
+// 🔁 Auto Refresh every 6s
+// ==============================
+function startAutoRefresh() {
+  stopAutoRefresh();
+  refreshTimer = setInterval(() => loadOrders(true), 6000);
+}
+
+function stopAutoRefresh() {
+  if (refreshTimer) clearInterval(refreshTimer);
+  refreshTimer = null;
+}
+
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden) stopAutoRefresh(); else startAutoRefresh();
+});
+
+// ==============================
+// 🍔 Sidebar + Logout + Filter
+// ==============================
+document.addEventListener("DOMContentLoaded", () => {
+  loadOrders();
+  startAutoRefresh();
+
+  hamburgerBtn?.addEventListener("click", () => {
+    sidebar.classList.toggle("active");
+  });
+
+  logoutBtn?.addEventListener("click", () => {
+    localStorage.clear();
+    window.location.href = "fresh-cart-home.html";
+  });
+
+  statusFilter.addEventListener("change", loadOrders);
+});
+</script>
+
+
+
+
+   
+
+</body>
+</html>
