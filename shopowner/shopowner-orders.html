@@ -6,7 +6,6 @@
     <title>Fresh Cart - Shopowner Orders</title>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
-        /* --- General Styles & Variables --- */
         :root {
             --primary-dark: #333333;
             --secondary-light: #f5f5f5;
@@ -16,7 +15,6 @@
             --border-color: #dddddd;
             --font-heading: 'Montserrat', sans-serif;
             --font-body: 'Roboto', sans-serif;
-
             --add-color: #28a745;
             --edit-color: #007bff;
             --delete-color: #dc3545;
@@ -46,7 +44,7 @@
             width: 100%;
         }
 
-        /* --- Sidebar Navigation --- */
+        /* Sidebar */
         .sidebar {
             width: 250px;
             background-color: var(--primary-dark);
@@ -114,7 +112,7 @@
             background-color: #cccccc;
         }
 
-        /* --- Hamburger Menu & Header --- */
+        /* Header */
         .header {
             position: fixed;
             top: 0;
@@ -128,6 +126,7 @@
             justify-content: space-between;
             align-items: center;
         }
+
         .hamburger-btn {
             font-size: 2rem;
             cursor: pointer;
@@ -153,15 +152,8 @@
             gap: 1rem;
             align-items: center;
         }
-        
-        .header-controls-link {
-            font-size: 1.5rem;
-            color: var(--primary-dark);
-            text-decoration: none;
-            position: relative;
-        }
 
-        /* --- Main Content Area --- */
+        /* Main content */
         .main-content {
             padding: 2rem;
             max-width: 1200px;
@@ -175,7 +167,7 @@
             margin-bottom: 2rem;
         }
 
-        /* --- Order Page Styles --- */
+        /* Orders */
         .order-filters {
             display: flex;
             gap: 1rem;
@@ -191,14 +183,14 @@
             border-radius: 8px;
             font-family: inherit;
         }
-        
+
         .order-table-container {
             background-color: var(--card-bg);
             border-radius: 12px;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
             overflow-x: auto;
         }
-        
+
         .orders-table {
             width: 100%;
             border-collapse: collapse;
@@ -215,7 +207,7 @@
             padding: 1rem 1.5rem;
             border-bottom: 1px solid var(--border-color);
         }
-        
+
         .orders-table tbody tr:last-child td {
             border-bottom: none;
         }
@@ -223,7 +215,7 @@
         .orders-table tbody tr:nth-child(even) {
             background-color: var(--secondary-light);
         }
-        
+
         .status-badge {
             padding: 0.25rem 0.75rem;
             border-radius: 6px;
@@ -231,14 +223,38 @@
             text-transform: capitalize;
             font-size: 0.9rem;
         }
-        
+
         .status-pending { background-color: #fff3e0; color: #e65100; }
         .status-shipped { background-color: #e0e0e0; color: #555; }
         .status-intransit { background-color: #b3e5fc; color: #0277bd; }
         .status-outfordelivery { background-color: #c8e6c9; color: #388e3c; }
         .status-delivered { background-color: #dcedc8; color: #558b2f; }
 
-        /* --- Responsive Design --- */
+        /* Order items panel */
+        .order-items-panel {
+            margin-top: 1.5rem;
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 1rem 1.5rem;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+        }
+
+        .order-item-row {
+            padding: 0.5rem 0;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 0.9rem;
+        }
+
+        .order-item-row:last-child {
+            border-bottom: none;
+        }
+
+        .order-item-row strong {
+            display: block;
+            margin-bottom: 0.25rem;
+        }
+
+        /* Responsive */
         @media (max-width: 768px) {
             .sidebar {
                 width: 100%;
@@ -252,9 +268,6 @@
                 padding-top: 5rem;
                 margin-left: 0;
             }
-            .sidebar.active ~ .main-content {
-                margin-left: 0;
-            }
             .orders-table th,
             .orders-table td {
                 padding: 0.75rem 1rem;
@@ -263,213 +276,204 @@
     </style>
 </head>
 <body>
-    <div class="dashboard-wrapper">
-        <aside class="sidebar" id="sidebar">
-            <div class="logo">Fresh Cart</div>
-            <nav class="main-nav">
-                <ul>
-                    <li class="nav-item"><a href="shopowner-dashboard.html">Dashboard</a></li>
-                    <li class="nav-item active"><a href="shopowner-catalog.html">Catalog</a></li>
-                    <li class="nav-item"><a href="shopowner-orders.html">Orders</a></li>
-                    <li class="nav-item"><a href="shopowner-payments.html">Payments</a></li>
-                    <li class="nav-item"><a href="shopowner-profile.html">Profile</a></li>
-                </ul>
-            </nav>
-            <button class="logout-btn">Log Out</button>
-        </aside>
+<div class="dashboard-wrapper">
+    <aside class="sidebar" id="sidebar">
+        <div class="logo">Fresh Cart</div>
+        <nav class="main-nav">
+            <ul>
+                <li class="nav-item"><a href="shopowner-dashboard.html">Dashboard</a></li>
+                <li class="nav-item"><a href="shopowner-catalog.html">Catalog</a></li>
+                <li class="nav-item"><a href="shopowner-orders.html" class="active">Orders</a></li>
+                <li class="nav-item"><a href="shopowner-payments.html">Payments</a></li>
+                <li class="nav-item"><a href="shopowner-profile.html">Profile</a></li>
+            </ul>
+        </nav>
+        <button class="logout-btn">Log Out</button>
+    </aside>
 
-        <header class="header">
-            <button class="hamburger-btn" id="hamburger-btn">☰</button>
-            <a href="#" class="header-logo">Fresh Cart</a>
-            <div class="header-controls">
-                </div>
-        </header>
+    <header class="header">
+        <button class="hamburger-btn" id="hamburger-btn">☰</button>
+        <a href="#" class="header-logo">Fresh Cart</a>
+        <div class="header-controls"></div>
+    </header>
 
-        <main class="main-content">
-            <h1 class="page-title">My Orders</h1>
-            
-            <div class="order-filters">
-                <select id="statusFilter">
-                    <option value="all">All Statuses</option>
-                    <option value="pending">Pending</option>
-                    <option value="shipped">Shipped</option>
-                    <option value="intransit">In Transit</option>
-                    <option value="outfordelivery">Out for Delivery</option>
-                    <option value="delivered">Delivered</option>
-                </select>
-            </div>
+    <main class="main-content">
+        <h1 class="page-title">My Orders</h1>
 
-            <div class="order-table-container">
-                <table class="orders-table">
-                    <thead>
-                        <tr>
-                            <th>Order ID</th>
-                            <th>Distributor</th>
-                            <th>Total Price</th>
-                            <th>Date</th>
-                            <th>Status</th>
-                        </tr>
-                    </thead>
-                    <tbody id="orders-list">
-                        </tbody>
-                    <div id="order-items-panel" class="order-items-panel">
-  <!-- Order items will be rendered here -->
+        <div class="order-filters">
+            <select id="statusFilter">
+                <option value="all">All Statuses</option>
+                <option value="pending">Pending</option>
+                <option value="shipped">Shipped</option>
+                <option value="intransit">In Transit</option>
+                <option value="outfordelivery">Out for Delivery</option>
+                <option value="delivered">Delivered</option>
+            </select>
+        </div>
+
+        <div class="order-table-container">
+            <table class="orders-table">
+                <thead>
+                <tr>
+                    <th>Order ID</th>
+                    <th>Distributor</th>
+                    <th>Total Price</th>
+                    <th>Date</th>
+                    <th>Status</th>
+                    <th>Items</th>
+                </tr>
+                </thead>
+                <tbody id="orders-list"></tbody>
+            </table>
+        </div>
+
+        <div id="order-items-panel" class="order-items-panel">
+            <em>Select “View items” for an order to see its products here.</em>
+        </div>
+    </main>
 </div>
 
-                </table>
-            </div>
-        </main>
-    </div>
 <script>
+document.addEventListener("DOMContentLoaded", () => {
     const API_BASE = "https://fresh-cart-backend-5.onrender.com";
 
-const user = JSON.parse(localStorage.getItem("fc_user") || "{}");
-const ordersTable = document.getElementById("orders-list");
-const sidebar = document.getElementById("sidebar");
-const hamburgerBtn = document.getElementById("hamburger-btn");
-const logoutBtn = document.querySelector(".logout-btn");
-const statusFilter = document.getElementById("statusFilter");
+    const user = JSON.parse(localStorage.getItem("fc_user") || "{}");
+    const ordersTable = document.getElementById("orders-list");
+    const sidebar = document.getElementById("sidebar");
+    const hamburgerBtn = document.getElementById("hamburger-btn");
+    const logoutBtn = document.querySelector(".logout-btn");
+    const statusFilter = document.getElementById("statusFilter");
+    const orderItemsPanel = document.getElementById("order-items-panel");
 
-let orders = [];
-let refreshTimer = null;
+    let orders = [];
+    let refreshTimer = null;
 
-// ==============================
-// 🟢 Load Orders from Backend
-// ==============================
-async function loadOrders(showAnimation = false) {
-  try {
-    if (!user.user_id) {
-      alert("Login required. Redirecting...");
-      window.location.href = "fresh-cart-home.html";
-      return;
+    // Load Orders
+    async function loadOrders(showAnimation = false) {
+        try {
+            if (!user.user_id) {
+                alert("Login required. Redirecting...");
+                window.location.href = "fresh-cart-home.html";
+                return;
+            }
+
+            const res = await fetch(`${API_BASE}/orders/${user.user_id}`);
+            if (!res.ok) throw new Error(`Error fetching orders: ${res.status}`);
+
+            const data = await res.json();
+            updateOrdersUI(data, showAnimation);
+        } catch (err) {
+            console.error("❌ Failed to load orders:", err);
+            ordersTable.innerHTML = `<tr><td colspan="6" style="text-align:center;">Error loading orders.</td></tr>`;
+        }
     }
 
-    const res = await fetch(`${API_BASE}/orders/${user.user_id}`);
-    if (!res.ok) throw new Error(`Error fetching orders: ${res.status}`);
+    // Render Orders
+    function updateOrdersUI(newOrders, animate) {
+        const oldMap = {};
+        orders.forEach(o => (oldMap[o.order_id] = o));
 
-    const data = await res.json();
-    updateOrdersUI(data, showAnimation);
-  } catch (err) {
-    console.error("❌ Failed to load orders:", err);
-    ordersTable.innerHTML = `<tr><td colspan="5" style="text-align:center;">Error loading orders.</td></tr>`;
-  }
-}
+        ordersTable.innerHTML = "";
 
-// ==============================
-// 🟡 Render Orders into Table
-// ==============================
-function updateOrdersUI(newOrders, animate) {
-  const oldMap = {};
-  orders.forEach(o => (oldMap[o.order_id] = o));
+        if (!newOrders || newOrders.length === 0) {
+            ordersTable.innerHTML = `<tr><td colspan="6" style="text-align:center;">No orders yet.</td></tr>`;
+            orderItemsPanel.innerHTML = `<em>No items to show.</em>`;
+            return;
+        }
 
-  ordersTable.innerHTML = "";
+        const filter = statusFilter.value.toLowerCase();
+        const filtered = filter === "all"
+            ? newOrders
+            : newOrders.filter(o => (o.status || "").toLowerCase() === filter);
 
-  if (!newOrders || newOrders.length === 0) {
-   ordersTable.innerHTML = `<tr><td colspan="6" style="text-align:center;">No orders yet.</td></tr>`;
+        filtered.forEach(order => {
+            const isChanged = animate && oldMap[order.order_id] && oldMap[order.order_id].status !== order.status;
 
-    return;
-  }
+            const row = document.createElement("tr");
+            if (isChanged) {
+                row.style.transition = "background-color 0.5s ease";
+                row.style.backgroundColor = "#e7ffe7";
+                setTimeout(() => (row.style.backgroundColor = ""), 700);
+            }
 
-  const filter = statusFilter.value.toLowerCase();
-  const filtered = filter === "all"
-    ? newOrders
-    : newOrders.filter(o => (o.status || "").toLowerCase() === filter);
+            row.innerHTML = `
+                <td>${order.order_id}</td>
+                <td>${order.distributor_name || "—"}</td>
+                <td>₹${order.total_amount || order.amount}</td>
+                <td>${new Date(order.order_date).toLocaleString()}</td>
+                <td><span class="status-badge status-${(order.status || "pending").toLowerCase()}">${order.status}</span></td>
+                <td>
+                    <button class="view-items-btn" data-order-id="${order.order_id}">
+                        View items
+                    </button>
+                </td>
+            `;
+            ordersTable.appendChild(row);
+        });
 
-  filtered.forEach(order => {
-    const isChanged = animate && oldMap[order.order_id] && oldMap[order.order_id].status !== order.status;
-
-    const row = document.createElement("tr");
-    if (isChanged) {
-      row.style.transition = "background-color 0.5s ease";
-      row.style.backgroundColor = "#e7ffe7"; // light green flash
-      setTimeout(() => (row.style.backgroundColor = ""), 700);
+        orders = newOrders;
     }
 
-     row.innerHTML = `
-      <td>${order.order_id}</td>
-      <td>${order.distributor_name || "—"}</td>
-      <td>₹${order.total_amount || order.amount}</td>
-      <td>${new Date(order.order_date).toLocaleString()}</td>
-      <td><span class="status-badge status-${(order.status || "pending").toLowerCase()}">${order.status}</span></td>
-      <td>
-        <button class="view-items-btn" data-order-id="${order.order_id}">
-          View items
-        </button>
-      </td>
-    `;
+    // Auto Refresh
+    function startAutoRefresh() {
+        stopAutoRefresh();
+        refreshTimer = setInterval(() => loadOrders(true), 6000);
+    }
 
+    function stopAutoRefresh() {
+        if (refreshTimer) clearInterval(refreshTimer);
+        refreshTimer = null;
+    }
 
+    document.addEventListener("visibilitychange", () => {
+        if (document.hidden) stopAutoRefresh(); else startAutoRefresh();
+    });
 
-    ordersTable.appendChild(row);
-  });
+    // Sidebar + Logout + Filter
+    hamburgerBtn.addEventListener("click", () => {
+        sidebar.classList.toggle("active");
+    });
 
-  orders = newOrders;
-}
-  
- // ==============================
-// 🔁 Auto Refresh every 6s
-// ==============================
-function startAutoRefresh() {
-  stopAutoRefresh();
-  refreshTimer = setInterval(() => loadOrders(true), 6000);
-}
+    logoutBtn.addEventListener("click", () => {
+        localStorage.clear();
+        window.location.href = "fresh-cart-home.html";
+    });
 
-function stopAutoRefresh() {
-  if (refreshTimer) clearInterval(refreshTimer);
-  refreshTimer = null;
-}
+    statusFilter.addEventListener("change", () => loadOrders());
 
-document.addEventListener("visibilitychange", () => {
-  if (document.hidden) stopAutoRefresh(); else startAutoRefresh();
-});
-
-// ==============================
-// 🍔 Sidebar + Logout + Filter
-// ==============================
-document.addEventListener("DOMContentLoaded", () => {
-  loadOrders();
-  startAutoRefresh();
-
-  hamburgerBtn?.addEventListener("click", () => {
-    sidebar.classList.toggle("active");
-  });
-
-  logoutBtn?.addEventListener("click", () => {
-    localStorage.clear();
-    window.location.href = "fresh-cart-home.html";
-  });
-
-  statusFilter.addEventListener("change", loadOrders);
-});
+    // View items click handler
     document.addEventListener("click", async (e) => {
-  if (e.target.matches(".view-items-btn")) {
-    const orderId = e.target.dataset.orderId;
+        if (e.target.matches(".view-items-btn")) {
+            const orderId = e.target.dataset.orderId;
 
-    try {
-      const res = await fetch(`${API_BASE}/order_items/${orderId}`);
-      const items = await res.json();
-      if (!res.ok) throw new Error(items.error || "Failed to load items");
+            try {
+                const res = await fetch(`${API_BASE}/order_items/${orderId}`);
+                const items = await res.json();
+                if (!res.ok) throw new Error(items.error || "Failed to load items");
 
-      // TODO: render items in a modal / below the row / side panel
-      console.log("Order items for", orderId, items);
-      // Example basic rendering:
-      const detailsDiv = document.getElementById("order-items-panel");
-      detailsDiv.innerHTML = items.map(it => `
-        <div class="order-item-row">
-          <strong>${it.product_name} - ${it.subproduct_name}</strong><br>
-          Brand: ${it.brand} | Qty: ${it.quantity} ${it.unit} | Price: ₹${it.price}
-        </div>
-      `).join("");
-    } catch (err) {
-      console.error(err);
-      alert("Failed to load order items");
-    }
-  }
+                if (!items.length) {
+                    orderItemsPanel.innerHTML = `<em>No items found for this order.</em>`;
+                    return;
+                }
+
+                orderItemsPanel.innerHTML = items.map(it => `
+                    <div class="order-item-row">
+                        <strong>${it.product_name} - ${it.subproduct_name}</strong>
+                        Brand: ${it.brand} | Qty: ${it.quantity} ${it.unit} | Price: ₹${it.price}
+                    </div>
+                `).join("");
+            } catch (err) {
+                console.error(err);
+                alert("Failed to load order items");
+            }
+        }
+    });
+
+    // Initial load
+    loadOrders();
+    startAutoRefresh();
 });
-
 </script>
 
 </body>
 </html>
-
-
