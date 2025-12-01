@@ -176,6 +176,31 @@
       sidebar.classList.toggle('active');
     });
 
+    // Try to extract items from whatever shape the backend sends
+    function extractItemsFromOrder(o) {
+      let items =
+        o.items ||
+        o.order_items ||
+        o.products ||
+        o.cart ||
+        o.cart_items ||
+        o.cartItems ||
+        o.orderProducts;
+
+      // If backend stored JSON string, parse it
+      if (typeof items === "string") {
+        try {
+          const parsed = JSON.parse(items);
+          if (Array.isArray(parsed)) items = parsed;
+        } catch (e) {
+          console.warn("Could not parse items JSON:", items);
+        }
+      }
+
+      if (!Array.isArray(items)) return [];
+      return items;
+    }
+
     // Load orders (active or deleted)
     async function loadOrders(silent = false) {
       if (!user?.user_id) {
@@ -190,6 +215,10 @@
         const res = await fetch(`${API_BASE}${endpoint}`);
         const data = await res.json();
 
+        if (!silent && Array.isArray(data) && data.length) {
+          console.log("Example order from API:", data[0]);
+        }
+
         // Normalize
         orders = (Array.isArray(data) ? data : []).map(o => ({
           id: o.order_id,
@@ -199,8 +228,7 @@
           status: (o.status || "Pending").toLowerCase(),
           date: (o.order_date || "").toString(),
           delete_date: o.delete_date || null,
-          // products / line items (support a few likely keys)
-          items: o.items || o.order_items || o.products || []
+          items: extractItemsFromOrder(o)
         }));
 
         renderOrders();
@@ -431,4 +459,5 @@
   </script>
 </body>
 </html>
-  <h1 class="page-title">Orders</h1>
+
+
