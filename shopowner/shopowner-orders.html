@@ -312,20 +312,16 @@
                     </thead>
                     <tbody id="orders-list">
                         </tbody>
+                    <div id="order-items-panel" class="order-items-panel">
+  <!-- Order items will be rendered here -->
+</div>
+
                 </table>
             </div>
         </main>
     </div>
 <script>
     const API_BASE = "https://fresh-cart-backend-5.onrender.com";
-<tr>
-  <!-- existing columns: order_id, status, total, etc -->
-  <td>
-    <button class="view-items-btn" data-order-id="ORDER_ID_HERE">
-      View items
-    </button>
-  </td>
-</tr>
 
 const user = JSON.parse(localStorage.getItem("fc_user") || "{}");
 const ordersTable = document.getElementById("orders-list");
@@ -369,7 +365,8 @@ function updateOrdersUI(newOrders, animate) {
   ordersTable.innerHTML = "";
 
   if (!newOrders || newOrders.length === 0) {
-    ordersTable.innerHTML = `<tr><td colspan="5" style="text-align:center;">No orders yet.</td></tr>`;
+   ordersTable.innerHTML = `<tr><td colspan="6" style="text-align:center;">No orders yet.</td></tr>`;
+
     return;
   }
 
@@ -388,20 +385,28 @@ function updateOrdersUI(newOrders, animate) {
       setTimeout(() => (row.style.backgroundColor = ""), 700);
     }
 
-    row.innerHTML = `
+     row.innerHTML = `
       <td>${order.order_id}</td>
       <td>${order.distributor_name || "—"}</td>
       <td>₹${order.total_amount || order.amount}</td>
       <td>${new Date(order.order_date).toLocaleString()}</td>
       <td><span class="status-badge status-${(order.status || "pending").toLowerCase()}">${order.status}</span></td>
+      <td>
+        <button class="view-items-btn" data-order-id="${order.order_id}">
+          View items
+        </button>
+      </td>
     `;
+
+
+
     ordersTable.appendChild(row);
   });
 
   orders = newOrders;
 }
-
-// ==============================
+  
+ // ==============================
 // 🔁 Auto Refresh every 6s
 // ==============================
 function startAutoRefresh() {
@@ -436,14 +441,35 @@ document.addEventListener("DOMContentLoaded", () => {
 
   statusFilter.addEventListener("change", loadOrders);
 });
+    document.addEventListener("click", async (e) => {
+  if (e.target.matches(".view-items-btn")) {
+    const orderId = e.target.dataset.orderId;
+
+    try {
+      const res = await fetch(`${API_BASE}/order_items/${orderId}`);
+      const items = await res.json();
+      if (!res.ok) throw new Error(items.error || "Failed to load items");
+
+      // TODO: render items in a modal / below the row / side panel
+      console.log("Order items for", orderId, items);
+      // Example basic rendering:
+      const detailsDiv = document.getElementById("order-items-panel");
+      detailsDiv.innerHTML = items.map(it => `
+        <div class="order-item-row">
+          <strong>${it.product_name} - ${it.subproduct_name}</strong><br>
+          Brand: ${it.brand} | Qty: ${it.quantity} ${it.unit} | Price: ₹${it.price}
+        </div>
+      `).join("");
+    } catch (err) {
+      console.error(err);
+      alert("Failed to load order items");
+    }
+  }
+});
+
 </script>
 
-
-
-
-   
-
 </body>
-
 </html>
+
 
