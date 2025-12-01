@@ -62,6 +62,43 @@
     .order-details{padding-top:1rem;border-top:1px dashed var(--border-color);margin-top:1rem}
     .action-buttons{display:flex;gap:.5rem;margin-top:1rem}
 
+    /* Products inside order card */
+    .order-products {
+      margin-top: 1rem;
+      padding: 0.75rem 1rem;
+      border-radius: 12px;
+      border: 1px dashed var(--border-color);
+      background-color: #fafafa;
+    }
+
+    .order-products-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.5rem;
+      font-weight: 500;
+      font-size: 0.95rem;
+    }
+
+    .order-product-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      font-size: 0.9rem;
+      padding: 0.15rem 0;
+    }
+
+    .order-product-name {
+      flex: 1;
+      margin-right: 0.5rem;
+    }
+
+    .order-product-meta {
+      white-space: nowrap;
+      font-variant-numeric: tabular-nums;
+      color: var(--text-light);
+    }
+
     @media (max-width:768px){
       .sidebar{width:100%;left:-100%}
       .sidebar.active{left:0}
@@ -117,7 +154,7 @@
   </div>
 
   <script>
-  const API_BASE = "https://fresh-cart-backend-5.onrender.com";
+    const API_BASE = "https://fresh-cart-backend-5.onrender.com";
 
     const user = JSON.parse(localStorage.getItem("fc_user") || "{}");
 
@@ -161,7 +198,9 @@
           rawStatus: o.status || "Pending",
           status: (o.status || "Pending").toLowerCase(),
           date: (o.order_date || "").toString(),
-          delete_date: o.delete_date || null
+          delete_date: o.delete_date || null,
+          // products / line items (support a few likely keys)
+          items: o.items || o.order_items || o.products || []
         }));
 
         renderOrders();
@@ -188,7 +227,7 @@
       }
 
       filtered.forEach(order => {
-        const statusClass = `status-${order.status}`;
+        const statusClass = `status-${order.status.replace(/\s+/g, "-")}`;
         const dateStr = order.date ? order.date.toString().split("T")[0] : "-";
 
         const card = document.createElement('div');
@@ -202,6 +241,9 @@
             <p><strong>Shopkeeper:</strong> ${order.shopkeeper || "-"}</p>
             <p><strong>Date:</strong> ${dateStr}</p>
             <p><strong>Total:</strong> ₹${order.total}</p>
+
+            ${buildProductsHtml(order)}
+
             <div class="action-buttons">
               ${buildActions(order)}
             </div>
@@ -216,20 +258,82 @@
       if (showDeleted) {
         return `<button class="btn-primary" data-restore-id="${order.id}">Restore</button>`;
       }
+
       switch (order.status) {
         case "pending":
           return `
-            <button class="btn-primary"   data-action="Accepted" data-id="${order.id}">Accept</button>
+            <button class="btn-primary" data-action="Accepted" data-id="${order.id}">Accept</button>
             <button class="btn-secondary" data-action="Declined" data-id="${order.id}">Decline</button>
             <button class="btn-secondary" data-delete-id="${order.id}">Delete</button>
           `;
         case "accepted":
           return `<button class="btn-primary" data-action="Shipped" data-id="${order.id}">Mark as Shipped</button>`;
         case "shipped":
+          return `<button class="btn-primary" data-action="Out for Delivery" data-id="${order.id}">Out for Delivery</button>`;
+        case "out for delivery":
           return `<button class="btn-primary" data-action="Delivered" data-id="${order.id}">Mark as Delivered</button>`;
         default:
           return ""; // delivered / declined
       }
+    }
+
+    // Build products section for each order
+    function buildProductsHtml(order) {
+      const items = order.items || [];
+      if (!items.length) return "";
+
+      const rows = items.map((item, idx) => {
+        const name =
+          item.product_name ||
+          item.name ||
+          item.product ||
+          `Item ${idx + 1}`;
+
+        const qty =
+          item.quantity ??
+          item.qty ??
+          item.order_quantity;
+
+        const unit =
+          item.unit ||
+          item.unit_name ||
+          "";
+
+        const price =
+          item.price_per_unit ??
+          item.price ??
+          item.rate;
+
+        let lineTotal = item.line_total;
+        if (lineTotal == null && qty != null && price != null) {
+          const qNum = Number(qty);
+          const pNum = Number(price);
+          if (!Number.isNaN(qNum) && !Number.isNaN(pNum)) {
+            lineTotal = qNum * pNum;
+          }
+        }
+
+        return `
+          <div class="order-product-row">
+            <span class="order-product-name">${name}</span>
+            <span class="order-product-meta">
+              ${qty ? `${qty} ${unit || ""}` : ""}
+              ${price ? ` × ₹${price}` : ""}
+              ${lineTotal != null ? ` = ₹${lineTotal}` : ""}
+            </span>
+          </div>
+        `;
+      }).join("");
+
+      return `
+        <div class="order-products">
+          <div class="order-products-header">
+            <span>Products</span>
+            <span>${items.length} item${items.length > 1 ? "s" : ""}</span>
+          </div>
+          ${rows}
+        </div>
+      `;
     }
 
     // Event delegation for all buttons inside order list
@@ -324,30 +428,6 @@
       await loadOrders();
       startPolling();
     });
-    function buildActions(order) {
-  if (showDeleted) {
-    return `<button class="btn-primary" data-restore-id="${order.id}">Restore</button>`;
-  }
-
-  switch (order.status) {
-    case "pending":
-      return `
-        <button class="btn-primary" data-action="Accepted" data-id="${order.id}">Accept</button>
-        <button class="btn-secondary" data-action="Declined" data-id="${order.id}">Decline</button>
-        <button class="btn-secondary" data-delete-id="${order.id}">Delete</button>
-      `;
-    case "accepted":
-      return `<button class="btn-primary" data-action="Shipped" data-id="${order.id}">Mark as Shipped</button>`;
-    case "shipped":
-      return `<button class="btn-primary" data-action="Out for Delivery" data-id="${order.id}">Out for Delivery</button>`;
-    case "out for delivery":
-      return `<button class="btn-primary" data-action="Delivered" data-id="${order.id}">Mark as Delivered</button>`;
-    default:
-      return ""; // delivered / declined
-  }
-}
-
   </script>
 </body>
 </html>
-
