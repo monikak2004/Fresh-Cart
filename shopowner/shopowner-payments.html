@@ -3,392 +3,164 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fresh Cart - Shopowner Payments</title>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <title>Razorpay Payment Integration</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- 1. Load the Razorpay Checkout SDK -->
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
     <style>
-        /* --- General Styles & Variables --- */
-        :root {
-            --primary-dark: #333333;
-            --secondary-light: #f5f5f5;
-            --card-bg: #ffffff;
-            --text-dark: #222222;
-            --text-light: #555555;
-            --border-color: #dddddd;
-            --font-heading: 'Montserrat', sans-serif;
-            --font-body: 'Roboto', sans-serif;
-
-            --add-color: #28a745;
-            --edit-color: #007bff;
-            --delete-color: #dc3545;
-        }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
         body {
-            font-family: var(--font-body);
-            color: var(--text-dark);
-            line-height: 1.6;
-            background-color: var(--secondary-light);
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc; /* Blue-Gray 50 */
             display: flex;
-        }
-
-        h1, h2, h3, h4 {
-            font-family: var(--font-heading);
-        }
-
-        .dashboard-wrapper {
-            display: flex;
+            justify-content: center;
+            align-items: center;
             min-height: 100vh;
-            width: 100%;
-        }
-
-        /* --- Sidebar Navigation --- */
-        .sidebar {
-            width: 250px;
-            background-color: var(--primary-dark);
-            height: 100vh;
-            position: fixed;
-            top: 0;
-            left: -250px;
-            transition: left 0.3s ease-in-out;
-            display: flex;
-            flex-direction: column;
-            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.2);
-            z-index: 1000;
-        }
-
-        .sidebar.active {
-            left: 0;
-        }
-
-        .logo {
-            padding: 2rem 1rem;
-            text-align: center;
-            color: var(--secondary-light);
-            font-size: 1.5rem;
-            font-weight: bold;
-        }
-
-        .main-nav {
-            list-style: none;
-            padding: 0;
-            flex-grow: 1;
-        }
-
-        .main-nav ul {
-            list-style: none;
-            padding: 0;
-        }
-
-        .nav-item a {
-            display: block;
-            padding: 1rem 2rem;
-            color: var(--secondary-light);
-            text-decoration: none;
-            transition: background-color 0.2s;
-            font-weight: 500;
-        }
-
-        .nav-item a.active,
-        .nav-item a:hover {
-            background-color: #555555;
-        }
-
-        .logout-btn {
-            width: 100%;
             padding: 1rem;
-            background-color: #e0e0e0;
-            color: var(--text-dark);
-            border: none;
-            cursor: pointer;
-            font-size: 1rem;
-            font-weight: 500;
-            transition: background-color 0.2s;
         }
-
-        .logout-btn:hover {
-            background-color: #cccccc;
-        }
-
-        /* --- Hamburger Menu & Header --- */
-        .header {
-            position: fixed;
-            top: 0;
-            left: 0;
+        .card {
+            background: white;
+            box-shadow: 0 15px 30px -5px rgba(0, 0, 0, 0.1), 0 5px 15px -5px rgba(0, 0, 0, 0.04);
+            max-width: 480px;
             width: 100%;
+            border-radius: 16px;
+            padding: 2.5rem;
+            border-top: 5px solid #3b82f6; /* Blue-500 for a highlight */
+        }
+        .btn-pay {
+            background-color: #16a34a; /* Green-600 */
+            color: white;
             padding: 1rem 2rem;
-            background-color: var(--card-bg);
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-            z-index: 1001;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .hamburger-btn {
-            font-size: 2rem;
-            cursor: pointer;
-            color: var(--primary-dark);
-            background: none;
-            border: none;
-            display: block;
-            position: absolute;
-            left: 1rem;
-        }
-
-        .header-logo {
-            font-family: var(--font-heading);
-            font-size: 1.8rem;
-            font-weight: 700;
-            color: var(--primary-dark);
-            text-decoration: none;
-            margin-left: 2rem;
-        }
-
-        .header-controls {
-            display: flex;
-            gap: 1rem;
-            align-items: center;
-        }
-        
-        .header-controls-link {
-            font-size: 1.5rem;
-            color: var(--primary-dark);
-            text-decoration: none;
-            position: relative;
-        }
-
-        /* --- Main Content Area --- */
-        .main-content {
-            padding: 2rem;
-            max-width: 1200px;
-            margin: 0 auto;
-            padding-top: 6rem;
-            width: 100%;
-        }
-
-        .page-title {
-            color: var(--primary-dark);
-            margin-bottom: 2rem;
-        }
-        
-        /* --- Payment Page Styles --- */
-        .payment-filters {
-            display: flex;
-            gap: 1rem;
-            margin-bottom: 2rem;
-            flex-wrap: wrap;
-        }
-
-        .payment-filters select {
-            flex: 1;
-            min-width: 150px;
-            padding: 0.75rem;
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            font-family: inherit;
-        }
-
-        .payment-table-container {
-            background-color: var(--card-bg);
             border-radius: 12px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-            overflow-x: auto;
-        }
-        
-        .payments-table {
+            font-weight: 700;
+            font-size: 1.125rem;
+            transition: all 0.2s;
+            box-shadow: 0 4px 6px -1px rgba(22, 163, 74, 0.3);
             width: 100%;
-            border-collapse: collapse;
-            font-size: 0.9rem;
-            text-align: left;
         }
-
-        .payments-table thead {
-            background-color: #f1f1f1;
-        }
-
-        .payments-table th,
-        .payments-table td {
-            padding: 1rem 1.5rem;
-            border-bottom: 1px solid var(--border-color);
-        }
-        
-        .payments-table tbody tr:last-child td {
-            border-bottom: none;
-        }
-
-        .payments-table tbody tr:nth-child(even) {
-            background-color: var(--secondary-light);
-        }
-
-        .status-badge {
-            padding: 0.25rem 0.75rem;
-            border-radius: 6px;
-            font-weight: 600;
-            text-transform: capitalize;
-            font-size: 0.9rem;
-        }
-        
-        .status-paid { background-color: #dcedc8; color: #558b2f; }
-        .status-pending { background-color: #fff3e0; color: #e65100; }
-        .status-refunded { background-color: #fce4ec; color: #ad1457; }
-
-        /* --- Responsive Design --- */
-        @media (max-width: 768px) {
-            .sidebar {
-                width: 100%;
-                left: -100%;
-            }
-            .sidebar.active {
-                left: 0;
-            }
-            .main-content {
-                padding: 1rem;
-                padding-top: 5rem;
-                margin-left: 0;
-            }
-            .sidebar.active ~ .main-content {
-                margin-left: 0;
-            }
+        .btn-pay:hover {
+            background-color: #15803d; /* Green-700 */
+            box-shadow: 0 6px 8px -2px rgba(22, 163, 74, 0.4);
+            transform: translateY(-1px);
         }
     </style>
 </head>
 <body>
-    <div class="dashboard-wrapper">
-        <aside class="sidebar" id="sidebar">
-            <div class="logo">Fresh Cart</div>
-            <nav class="main-nav">
-                <ul>
-                    <li class="nav-item"><a href="shopowner-dashboard.html">Dashboard</a></li>
-                    <li class="nav-item"><a href="shopowner-catalog.html">Catalog</a></li>
-                    <li class="nav-item"><a href="shopowner-orders.html">Orders</a></li>
-                    <li class="nav-item active"><a href="shopowner-payments.html">Payments</a></li>
-                    <li class="nav-item"><a href="shopowner-profile.html">Profile</a></li>
-                </ul>
-            </nav>
-            <button class="logout-btn">Log Out</button>
-        </aside>
 
-        <header class="header">
-            <button class="hamburger-btn" id="hamburger-btn">☰</button>
-            <a href="#" class="header-logo">Fresh Cart</a>
-            <div class="header-controls">
-                </div>
-        </header>
+    <div class="card text-center">
+        <div class="flex justify-center mb-6">
+            <!-- Razorpay Icon Placeholder (inline SVG for visual appeal) -->
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-16 h-16 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="18" height="18" rx="4" ry="4"></rect>
+                <path d="M12 18V6"></path>
+                <path d="M9 10h6"></path>
+                <path d="M9 14h6"></path>
+            </svg>
+        </div>
+        
+        <h1 class="text-3xl font-extrabold text-gray-900 mb-2">Checkout for Course Enrollment</h1>
+        <p class="text-gray-600 mb-6">
+            Securely pay ₹599.00 using Razorpay. This example demonstrates a frontend-only initiation (for simulation) and handles the payment response.
+        </p>
 
-        <main class="main-content">
-            <h1 class="page-title">My Payments</h1>
+        <!-- Container for messages (success/error) -->
+        <div id="message-box" class="mb-6 text-left hidden"></div>
 
-            <div class="payment-filters">
-                <select id="statusFilter">
-                    <option value="all">All Statuses</option>
-                    <option value="paid">Paid</option>
-                    <option value="pending">Pending</option>
-                    <option value="refunded">Refunded</option>
-                </select>
-            </div>
-            
-            <div class="payment-table-container">
-                <table class="payments-table">
-                    <thead>
-                        <tr>
-                            <th>Order ID</th>
-                            <th>Distributor</th>
-                            <th>Amount</th>
-                            <th>Status</th>
-                        </tr>
-                    </thead>
-                    <tbody id="payments-list">
-                        </tbody>
-                </table>
-            </div>
-        </main>
+        <button id="rzp-button1" class="btn-pay">
+            Pay Now - ₹599
+        </button>
+
     </div>
 
- <script>
-const API_BASE = "https://fresh-cart-backend-5.onrender.com";
+    <script>
+        // --- Configuration ---
+        // !!! IMPORTANT: Replace this with your actual Key ID from the Razorpay Dashboard !!!
+        // PASTE YOUR KEY ID HERE:
+        const RAZORPAY_KEY_ID = 'rzp_test_YOUR_KEY_ID_HERE'; 
+        const amountInPaise = 59900; // Rs 599.00 (Razorpay works in the smallest currency unit, paise)
 
-const sidebar = document.getElementById("sidebar");
-const hamburgerBtn = document.getElementById("hamburger-btn");
-const logoutBtn = document.querySelector(".logout-btn");
-const paymentsList = document.getElementById("payments-list");
-const statusFilter = document.getElementById("statusFilter");
+        const rzpButton = document.getElementById('rzp-button1');
+        const messageBox = document.getElementById('message-box');
 
-const user = JSON.parse(localStorage.getItem("fc_user") || "{}");
+        /**
+         * Shows a message in the UI (like an alert, but less intrusive).
+         * @param {string} message - The message content.
+         * @param {string} type - 'success' or 'error'.
+         */
+        const showMessage = (message, type) => {
+            const bgColor = type === 'success' ? 'bg-green-100 border-green-400 text-green-700' : 'bg-red-100 border-red-400 text-red-700';
+            const title = type === 'success' ? 'Payment Successful' : 'Payment Error';
+            
+            messageBox.className = mb-6 text-left p-4 border rounded-lg ${bgColor};
+            messageBox.innerHTML = `
+                <p class="font-bold">${title}</p>
+                <p class="text-sm mt-1">${message}</p>
+            `;
+            messageBox.classList.remove('hidden');
+        };
 
-// ✅ Fetch payments from backend
-async function fetchPayments() {
-  try {
-    const res = await fetch(`${API_BASE}/payments/${user.user_id}`);
-    if (!res.ok) throw new Error("Failed to fetch payments");
+        const handlePayment = (response) => {
+            // This function is called by Razorpay when the payment is completed successfully.
 
-    const payments = await res.json();
-    renderPayments(payments);
-  } catch (error) {
-    console.error("❌ Error loading payments:", error);
-    paymentsList.innerHTML = `<tr><td colspan="4" style="text-align:center; color:#b00;">Failed to load payments</td></tr>`;
-  }
-}
+            // 1. Get the crucial payment IDs
+            const paymentId = response.razorpay_payment_id;
+            const orderId = response.razorpay_order_id; // This would typically come from your backend
+            const signature = response.razorpay_signature; // Crucial for security verification
 
-// ✅ Render fetched payments
-function renderPayments(paymentArray) {
-  paymentsList.innerHTML = "";
+            // 2. IMPORTANT: Secure Verification
+            // In a real application, you MUST send the paymentId, orderId, and signature
+            // to your secure backend server. The server must use the Razorpay Key Secret 
+            // (which should NEVER be in the frontend) to verify the signature. 
+            // This prevents tampering and ensures the payment is genuine.
 
-  if (paymentArray.length === 0) {
-    paymentsList.innerHTML = `<tr><td colspan="4" style="text-align:center; color:#777;">No payments found.</td></tr>`;
-    return;
-  }
+            // 3. Display Success (Frontend simulation)
+            showMessage(Payment ID: ${paymentId}. Your order is confirmed. Verification pending on the backend., 'success');
+            console.log("Payment successful response:", response);
+        };
 
-  const filter = statusFilter.value.toLowerCase();
-  const filtered = filter === "all"
-    ? paymentArray
-    : paymentArray.filter(p => p.payment_status.toLowerCase() === filter);
+        const handleCheckout = () => {
+            // This is the configuration object for the Razorpay popup
+            var options = {
+                // Key ID is the only thing we expose on the frontend
+                "key": RAZORPAY_KEY_ID, 
+                "amount": amountInPaise, 
+                "currency": "INR",
+                
+                // NOTE: In a real app, this MUST be generated by your backend and passed here.
+                "order_id": "order_mock_" + Date.now(), 
 
-  if (filtered.length === 0) {
-    paymentsList.innerHTML = `<tr><td colspan="4" style="text-align:center; color:#777;">No ${filter} payments.</td></tr>`;
-    return;
-  }
+                "name": "My E-Commerce Site",
+                "description": "Purchase of Web Development Course",
+                "image": "https://placehold.co/100x100/3b82f6/ffffff?text=E-Com", // Replace with your logo
 
-  filtered.forEach(p => {
-    const statusClass = 
-      p.payment_status.toLowerCase() === "paid"
-        ? "status-paid"
-        : p.payment_status.toLowerCase() === "pending"
-        ? "status-pending"
-        : "status-refunded";
+                "handler": handlePayment, // The function to call on successful payment
 
-    const row = document.createElement("tr");
-    row.innerHTML = `
-      <td>${p.order_id}</td>
-      <td>${p.distributor_name || "N/A"}</td>
-      <td>₹${parseFloat(p.amount).toFixed(2)}</td>
-      <td><span class="status-badge ${statusClass}">${p.payment_status}</span></td>
-    `;
-    paymentsList.appendChild(row);
-  });
-}
+                "prefill": {
+                    "name": "John Doe", 
+                    "email": "john.doe@example.com",
+                    "contact": "9999999999" // A valid Indian phone number is required for testing
+                },
+                "notes": {
+                    "address": "Sample Address, India"
+                },
+                "theme": {
+                    "color": "#3b82f6" // Primary color for the checkout widget
+                }
+            };
 
-// ✅ Event Listeners
-document.addEventListener("DOMContentLoaded", () => {
-  fetchPayments();
+            // Create a new instance of Razorpay and open the payment window
+            var rzp = new Razorpay(options);
+            
+            rzp.on('payment.failed', function (response){
+                // This is called when the payment fails or is canceled by the user
+                const error = response.error;
+                showMessage(Code: ${error.code}. Description: ${error.description}, 'error');
+                console.error("Payment failed response:", response);
+            });
 
-  statusFilter.addEventListener("change", fetchPayments);
+            rzp.open();
+        };
 
-  hamburgerBtn?.addEventListener("click", () => {
-    sidebar.classList.toggle("active");
-  });
-
-  logoutBtn?.addEventListener("click", () => {
-    localStorage.clear();
-    window.location.href = "fresh-cart-home.html";
-  });
-});
-</script>
-
-
+        rzpButton.addEventListener('click', handleCheckout);
+    </script>
 </body>
-
-</html>
