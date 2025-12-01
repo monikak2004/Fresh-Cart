@@ -1,4 +1,4 @@
-const BASE_URL = "http://localhost:5000";
+const BASE_URL = "https://fresh-cart-backend-5.onrender.com";
 
 // ===== AUTH =====
 async function registerUser(data) {
@@ -67,3 +67,4 @@ async function distributorUpdateOrderStatus(order_id, status) {
   });
   return res.json();
 }
+
