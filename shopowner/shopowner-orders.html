@@ -318,6 +318,14 @@
     </div>
 <script>
     const API_BASE = "https://fresh-cart-backend-5.onrender.com";
+<tr>
+  <!-- existing columns: order_id, status, total, etc -->
+  <td>
+    <button class="view-items-btn" data-order-id="ORDER_ID_HERE">
+      View items
+    </button>
+  </td>
+</tr>
 
 const user = JSON.parse(localStorage.getItem("fc_user") || "{}");
 const ordersTable = document.getElementById("orders-list");
@@ -438,3 +446,4 @@ document.addEventListener("DOMContentLoaded", () => {
 </body>
 
 </html>
+
