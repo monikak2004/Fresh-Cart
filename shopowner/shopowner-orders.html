@@ -230,6 +230,25 @@
         .status-outfordelivery { background-color: #c8e6c9; color: #388e3c; }
         .status-delivered { background-color: #dcedc8; color: #558b2f; }
 
+        /* View items button */
+        .view-items-btn {
+            padding: 0.4rem 0.9rem;
+            border-radius: 999px;
+            border: 1px solid var(--primary-dark);
+            background-color: #ffffff;
+            color: var(--primary-dark);
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+        }
+
+        .view-items-btn:hover {
+            background-color: var(--primary-dark);
+            color: #ffffff;
+        }
+
         /* Order items panel */
         .order-items-panel {
             margin-top: 1.5rem;
@@ -237,6 +256,11 @@
             border-radius: 12px;
             padding: 1rem 1.5rem;
             box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+        }
+
+        .order-items-panel h2 {
+            font-size: 1.1rem;
+            margin-bottom: 0.75rem;
         }
 
         .order-item-row {
@@ -328,6 +352,7 @@
         </div>
 
         <div id="order-items-panel" class="order-items-panel">
+            <h2>Order items</h2>
             <em>Select “View items” for an order to see its products here.</em>
         </div>
     </main>
@@ -348,7 +373,6 @@ document.addEventListener("DOMContentLoaded", () => {
     let orders = [];
     let refreshTimer = null;
 
-    // Load Orders
     async function loadOrders(showAnimation = false) {
         try {
             if (!user.user_id) {
@@ -368,7 +392,6 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    // Render Orders
     function updateOrdersUI(newOrders, animate) {
         const oldMap = {};
         orders.forEach(o => (oldMap[o.order_id] = o));
@@ -377,7 +400,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if (!newOrders || newOrders.length === 0) {
             ordersTable.innerHTML = `<tr><td colspan="6" style="text-align:center;">No orders yet.</td></tr>`;
-            orderItemsPanel.innerHTML = `<em>No items to show.</em>`;
+            orderItemsPanel.innerHTML = `<h2>Order items</h2><em>No items to show.</em>`;
             return;
         }
 
@@ -414,7 +437,6 @@ document.addEventListener("DOMContentLoaded", () => {
         orders = newOrders;
     }
 
-    // Auto Refresh
     function startAutoRefresh() {
         stopAutoRefresh();
         refreshTimer = setInterval(() => loadOrders(true), 6000);
@@ -429,7 +451,6 @@ document.addEventListener("DOMContentLoaded", () => {
         if (document.hidden) stopAutoRefresh(); else startAutoRefresh();
     });
 
-    // Sidebar + Logout + Filter
     hamburgerBtn.addEventListener("click", () => {
         sidebar.classList.toggle("active");
     });
@@ -441,7 +462,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     statusFilter.addEventListener("change", () => loadOrders());
 
-    // View items click handler
     document.addEventListener("click", async (e) => {
         if (e.target.matches(".view-items-btn")) {
             const orderId = e.target.dataset.orderId;
@@ -449,27 +469,34 @@ document.addEventListener("DOMContentLoaded", () => {
             try {
                 const res = await fetch(`${API_BASE}/order_items/${orderId}`);
                 const items = await res.json();
-                if (!res.ok) throw new Error(items.error || "Failed to load items");
 
-                if (!items.length) {
-                    orderItemsPanel.innerHTML = `<em>No items found for this order.</em>`;
+                if (!res.ok) {
+                    console.error("❌ /order_items error response:", items);
+                    alert(items.error || "Failed to fetch items from server.");
                     return;
                 }
 
-                orderItemsPanel.innerHTML = items.map(it => `
-                    <div class="order-item-row">
-                        <strong>${it.product_name} - ${it.subproduct_name}</strong>
-                        Brand: ${it.brand} | Qty: ${it.quantity} ${it.unit} | Price: ₹${it.price}
-                    </div>
-                `).join("");
+                if (!items.length) {
+                    orderItemsPanel.innerHTML = `<h2>Order items</h2><em>No items found for this order.</em>`;
+                    return;
+                }
+
+                orderItemsPanel.innerHTML = `
+                    <h2>Order #${orderId} items</h2>
+                    ${items.map(it => `
+                        <div class="order-item-row">
+                            <strong>${it.product_name} - ${it.subproduct_name}</strong>
+                            Brand: ${it.brand} | Qty: ${it.quantity} ${it.unit} | Price: ₹${it.price}
+                        </div>
+                    `).join("")}
+                `;
             } catch (err) {
-                console.error(err);
-                alert("Failed to load order items");
+                console.error("❌ Failed to fetch order items:", err);
+                alert("Network error while fetching items.");
             }
         }
     });
 
-    // Initial load
     loadOrders();
     startAutoRefresh();
 });
@@ -477,3 +504,4 @@ document.addEventListener("DOMContentLoaded", () => {
 
 </body>
 </html>
+
