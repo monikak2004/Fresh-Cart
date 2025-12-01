@@ -452,7 +452,8 @@
  * Keeps your HTML/CSS exactly the same.
  */
 
-const API_BASE = "http://127.0.0.1:5000";
+const API_BASE = "https://fresh-cart-backend-5.onrender.com";
+
 
 let catalog = {};   // { Category: { Product: { VariantName: [ {variant_id,brand,unit,price,stock}, ... ] } } }
 let cart = JSON.parse(localStorage.getItem("freshcart_cart") || "[]");
@@ -822,4 +823,5 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
 </body>
+
 </html>
