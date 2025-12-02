@@ -151,14 +151,6 @@
             margin-left: 250px;
         }
 
-        .page-content {
-            display: none;
-        }
-
-        .page-content.active {
-            display: block;
-        }
-
         .page-title {
             color: var(--primary-dark);
             margin-bottom: 2rem;
@@ -194,6 +186,7 @@
         .quick-action-card {
             cursor: pointer;
             transition: transform 0.2s;
+            text-align: center;
         }
         
         .quick-action-card:hover {
@@ -226,19 +219,22 @@
         }
 
         .analytics-placeholder {
-            height: 200px;
+            min-height: 120px;
             background-color: var(--secondary-light);
             border-radius: 8px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            padding: 1rem;
             color: var(--text-light);
-            font-style: italic;
+            font-size: 0.9rem;
         }
-        
-        /* Order Page Specific Styles (placeholder) */
-        .search-filter-container, .order-container {
-            display: none; /* Hide orders content on this page */
+
+        .analytics-list {
+            list-style: none;
+            padding-left: 0;
+            margin: 0;
+        }
+
+        .analytics-list li {
+            padding: 0.3rem 0;
         }
         
         /* --- Responsive Design --- */
@@ -284,122 +280,291 @@
 
         <main class="content-area">
             <h1 class="page-title">Dashboard Overview</h1>
-            <h2 style="font-family: var(--font-body); font-weight: 500; margin-bottom: 1rem;">Quick Stats</h2>
+
+            <h2 style="font-family: var(--font-body); font-weight: 500; margin-bottom: 1rem;">
+                Quick Stats
+            </h2>
             <div class="summary-cards" id="summary-cards"></div>
-            <h2 style="font-family: var(--font-body); font-weight: 500; margin-bottom: 1rem;">Sales & Orders</h2>
+
+            <h2 style="font-family: var(--font-body); font-weight: 500; margin-bottom: 1rem;">
+                Sales & Orders
+            </h2>
             <div class="analytics-section">
                 <div class="analytics-card">
-                    <h3>Orders Over Time</h3>
-                    <div class="analytics-placeholder">Graph of orders goes here (e.g., using Chart.js)</div>
+                    <h3>Orders Overview</h3>
+                    <div class="analytics-placeholder" id="orders-overview">
+                        Loading orders...
+                    </div>
                 </div>
                 <div class="analytics-card">
-                    <h3>Top-Selling Products</h3>
-                    <ul id="top-products-list" style="list-style: none; padding-left: 0;"></ul>
+                    <h3>Payments Overview</h3>
+                    <div class="analytics-placeholder" id="payments-overview">
+                        Loading payments...
+                    </div>
                 </div>
                 <div class="analytics-card">
                     <h3>Active Shopkeepers</h3>
-                    <ul id="active-shopkeepers-list" style="list-style: none; padding-left: 0;"></ul>
+                    <ul id="active-shopkeepers-list" class="analytics-list"></ul>
                 </div>
             </div>
-            <h2 style="font-family: var(--font-body); font-weight: 500; margin-bottom: 1rem;">Quick Actions</h2>
+
+            <h2 style="font-family: var(--font-body); font-weight: 500; margin-bottom: 1rem;">
+                Quick Actions
+            </h2>
             <div class="quick-actions" id="quick-actions-panel"></div>
         </main>
     </div>
 
     <script>
-        // --- Dummy Data ---
-        let distributorData = {
-            products: [
-                { id: 'p1', name: 'Organic Apples', category: 'fruits', stock: 50, sales: 250 },
-                { id: 'p2', name: 'Fresh Tomatoes', category: 'vegetables', stock: 10, sales: 120 },
-                { id: 'p3', name: 'Artisan Bread', category: 'bakery', stock: 8, sales: 90 },
-                { id: 'p4', name: 'Carrots', category: 'vegetables', stock: 150, sales: 80 },
-                { id: 'p5', name: 'Bananas', category: 'fruits', stock: 12, sales: 150 }
-            ],
-            orders: [
-                { id: 1001, shopkeeper: 'GreenMart', total: 1500, status: 'pending', date: '2025-08-30', items: [{ name: 'Organic Apples', quantity: 10, price: 100 }, { name: 'Fresh Tomatoes', quantity: 5, price: 50 }] },
-                { id: 1002, shopkeeper: 'Fresh Foods', total: 750, status: 'accepted', date: '2025-08-29', items: [{ name: 'Artisan Bread', quantity: 5, price: 150 }] },
-                { id: 1003, shopkeeper: 'Nature\'s Basket', total: 2200, status: 'shipped', date: '2025-08-28', items: [{ name: 'Organic Apples', quantity: 20, price: 100 }, { name: 'Fresh Blueberries', quantity: 4, price: 50 }] },
-                { id: 1004, shopkeeper: 'Daily Needs', total: 1250, status: 'pending', date: '2025-08-30', items: [{ name: 'Fresh Tomatoes', quantity: 25, price: 50 }] },
-                { id: 1005, shopkeeper: 'HealthyMart', total: 1800, status: 'delivered', date: '2025-08-27', items: [{ name: 'Artisan Bread', quantity: 10, price: 150 }, { name: 'Fresh Avocados', quantity: 6, price: 50 }] },
-                { id: 1006, shopkeeper: 'City Supermarket', total: 950, status: 'pending', date: '2025-08-30', items: [{ name: 'Carrots', quantity: 5, price: 60 }, { name: 'Onions', quantity: 8, price: 40 }] },
-                { id: 1007, shopkeeper: 'Farm Fresh', total: 2500, status: 'shipped', date: '2025-08-29', items: [{ name: 'Potatoes', quantity: 25, price: 80 }, { name: 'Cabbage', quantity: 10, price: 50 }] },
-                { id: 1008, shopkeeper: 'QuickMart', total: 320, status: 'accepted', date: '2025-08-28', items: [{ name: 'Tomatoes', quantity: 4, price: 80 }] },
-                { id: 1009, shopkeeper: 'Organic Hub', total: 550, status: 'delivered', date: '2025-08-27', items: [{ name: 'Milk', quantity: 10, price: 55 }] },
-                { id: 1010, shopkeeper: 'The Food Spot', total: 980, status: 'pending', date: '2025-08-30', items: [{ name: 'Cucumbers', quantity: 15, price: 45 }, { name: 'Lettuce', quantity: 8, price: 35 }] }
-            ],
-            payments: [
-                { id: 2001, orderId: 1001, amount: 1500, status: 'Pending' },
-                { id: 2002, orderId: 1002, amount: 750, status: 'Paid' },
-                { id: 2003, orderId: 1003, amount: 2200, status: 'Paid' },
-                { id: 2004, orderId: 1004, amount: 1250, status: 'Pending' }
-            ],
-            salesData: {
-                labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-                orders: [12, 19, 3, 5, 2, 3, 7],
-            },
-            shopkeepers: [
-                { name: 'GreenMart', orders: 12 },
-                { name: 'Fresh Foods', orders: 8 },
-                { name: 'Nature\'s Basket', orders: 20 }
-            ],
-            profile: {
-                name: 'John Doe',
-                email: 'john.doe@distributor.com'
-            }
-        };
+        const API_BASE = "https://fresh-cart-backend-5.onrender.com";
 
-        // --- JavaScript Logic ---
+        const sidebar              = document.getElementById('sidebar');
+        const hamburgerBtn         = document.getElementById('hamburger-btn');
+        const navLinks             = document.querySelectorAll('.nav-item a');
+        const logoutBtn            = document.querySelector('.logout-btn');
+        const summaryCardsEl       = document.getElementById('summary-cards');
+        const ordersOverviewEl     = document.getElementById('orders-overview');
+        const paymentsOverviewEl   = document.getElementById('payments-overview');
+        const activeShopkeepersEl  = document.getElementById('active-shopkeepers-list');
+        const quickActionsPanel    = document.getElementById('quick-actions-panel');
+
+        let user = JSON.parse(localStorage.getItem("fc_user") || "{}");
+
+        function ensureDistributor() {
+            if (!user.user_id || (user.role && user.role.toLowerCase() !== "distributor")) {
+                alert("Please log in as a distributor.");
+                window.location.href = "fresh-cart-login.html?role=distributor";
+            }
+        }
+
+        function renderQuickActions() {
+            quickActionsPanel.innerHTML = `
+                <div class="quick-action-card" onclick="window.location.href='distributor-products.html'">
+                    <h3>➕ Add / Manage Products</h3>
+                </div>
+                <div class="quick-action-card" onclick="window.location.href='distributor-orders.html'">
+                    <h3>🚚 Process Orders</h3>
+                </div>
+                <div class="quick-action-card" onclick="window.location.href='distributor-payments.html'">
+                    <h3>💳 Review Payments</h3>
+                </div>
+            `;
+        }
+
+        function renderSummaryCards({ totalProducts, lowStockCount, activeOrdersCount, deliveredOrdersCount, totalRevenue, pendingAmount }) {
+            summaryCardsEl.innerHTML = `
+                <div class="summary-card">
+                    <h3>Total Products</h3>
+                    <p>${totalProducts}</p>
+                </div>
+                <div class="summary-card">
+                    <h3>Low Stock (&lt; 15)</h3>
+                    <p>${lowStockCount}</p>
+                </div>
+                <div class="summary-card">
+                    <h3>Active Orders</h3>
+                    <p>${activeOrdersCount}</p>
+                </div>
+                <div class="summary-card">
+                    <h3>Delivered Orders</h3>
+                    <p>${deliveredOrdersCount}</p>
+                </div>
+                <div class="summary-card">
+                    <h3>Total Revenue (Paid)</h3>
+                    <p>₹${totalRevenue.toFixed(2)}</p>
+                </div>
+                <div class="summary-card">
+                    <h3>Pending Payments</h3>
+                    <p>₹${pendingAmount.toFixed(2)}</p>
+                </div>
+            `;
+        }
+
+        function renderOrdersOverview(stats) {
+            const {
+                totalOrders,
+                pendingCount,
+                acceptedCount,
+                shippedCount,
+                ofdCount,
+                deliveredCount,
+                declinedCount,
+                deletedCount
+            } = stats;
+
+            ordersOverviewEl.innerHTML = `
+                <p><strong>Total orders:</strong> ${totalOrders}</p>
+                <p><strong>Pending:</strong> ${pendingCount}</p>
+                <p><strong>Accepted:</strong> ${acceptedCount}</p>
+                <p><strong>Shipped:</strong> ${shippedCount}</p>
+                <p><strong>Out for delivery:</strong> ${ofdCount}</p>
+                <p><strong>Delivered:</strong> ${deliveredCount}</p>
+                <p><strong>Declined:</strong> ${declinedCount}</p>
+                <p><strong>Deleted:</strong> ${deletedCount}</p>
+            `;
+        }
+
+        function renderPaymentsOverview(stats) {
+            const { totalPaid, totalPending, totalCompleted, totalCancelled, totalRefunded } = stats;
+
+            paymentsOverviewEl.innerHTML = `
+                <p><strong>Paid:</strong> ₹${totalPaid.toFixed(2)}</p>
+                <p><strong>Pending:</strong> ₹${totalPending.toFixed(2)}</p>
+                <p><strong>Completed:</strong> ₹${totalCompleted.toFixed(2)}</p>
+                <p><strong>Refunded:</strong> ₹${totalRefunded.toFixed(2)}</p>
+                <p><strong>Cancelled:</strong> ₹${totalCancelled.toFixed(2)}</p>
+            `;
+        }
+
+        function renderActiveShopkeepers(shopkeepers) {
+            if (!shopkeepers.length) {
+                activeShopkeepersEl.innerHTML = `<li>No orders yet.</li>`;
+                return;
+            }
+
+            activeShopkeepersEl.innerHTML = shopkeepers
+                .map(s => `<li><strong>${s.name}</strong> — ${s.orders} order(s)</li>`)
+                .join("");
+        }
+
+        async function fetchDashboardData() {
+            try {
+                ensureDistributor();
+
+                const distributorId = user.user_id;
+
+                const [productsRes, ordersRes, paymentsRes] = await Promise.all([
+                    fetch(`${API_BASE}/distributor/products/${distributorId}`),
+                    fetch(`${API_BASE}/distributor/orders/${distributorId}`),
+                    fetch(`${API_BASE}/distributor/payments/${distributorId}`)
+                ]);
+
+                const [productsData, ordersData, paymentsData] = await Promise.all([
+                    productsRes.ok ? productsRes.json() : [],
+                    ordersRes.ok ? ordersRes.json() : [],
+                    paymentsRes.ok ? paymentsRes.json() : []
+                ]);
+
+                const products = Array.isArray(productsData) ? productsData : [];
+                const orders = Array.isArray(ordersData) ? ordersData : [];
+                const payments = Array.isArray(paymentsData) ? paymentsData : [];
+
+                // --- Products stats ---
+                const totalProducts = products.length;
+                const lowStockCount = products.filter(p => Number(p.stock) < 15).length;
+
+                // --- Orders stats ---
+                const normalizedOrders = orders.map(o => ({
+                    status: (o.status || "Pending").toLowerCase(),
+                    shop_owner: o.shop_owner
+                }));
+
+                const totalOrders = normalizedOrders.length;
+                const pendingCount   = normalizedOrders.filter(o => o.status === "pending").length;
+                const acceptedCount  = normalizedOrders.filter(o => o.status === "accepted").length;
+                const shippedCount   = normalizedOrders.filter(o => o.status === "shipped").length;
+                const ofdCount       = normalizedOrders.filter(o => o.status === "out for delivery").length;
+                const deliveredCount = normalizedOrders.filter(o => o.status === "delivered").length;
+                const declinedCount  = normalizedOrders.filter(o => o.status === "declined").length;
+                const deletedCount   = normalizedOrders.filter(o => o.status === "deleted").length;
+
+                const activeOrdersCount = normalizedOrders.filter(
+                    o => !["delivered", "declined", "deleted"].includes(o.status)
+                ).length;
+
+                // --- Payments stats ---
+                const normalizedPayments = payments.map(p => ({
+                    status: (p.payment_status || p.status || "").toLowerCase(),
+                    amount: Number(p.amount) || 0
+                }));
+
+                let totalPaid = 0, totalPending = 0, totalCompleted = 0, totalCancelled = 0, totalRefunded = 0;
+
+                normalizedPayments.forEach(p => {
+                    if (p.status === "paid") totalPaid += p.amount;
+                    else if (p.status === "pending") totalPending += p.amount;
+                    else if (p.status === "completed") totalCompleted += p.amount;
+                    else if (p.status === "cancelled") totalCancelled += p.amount;
+                    else if (p.status === "refunded") totalRefunded += p.amount;
+                });
+
+                const totalRevenue = totalPaid + totalCompleted;
+                const pendingAmount = totalPending;
+
+                // --- Active shopkeepers list ---
+                const shopkeeperMap = new Map();
+                normalizedOrders.forEach(o => {
+                    const name = o.shop_owner || "Unknown shop";
+                    if (!shopkeeperMap.has(name)) shopkeeperMap.set(name, 0);
+                    shopkeeperMap.set(name, shopkeeperMap.get(name) + 1);
+                });
+
+                const shopkeepers = Array.from(shopkeeperMap.entries())
+                    .map(([name, orders]) => ({ name, orders }))
+                    .sort((a, b) => b.orders - a.orders)
+                    .slice(0, 5);
+
+                // Render all sections
+                renderSummaryCards({
+                    totalProducts,
+                    lowStockCount,
+                    activeOrdersCount,
+                    deliveredOrdersCount: deliveredCount,
+                    totalRevenue,
+                    pendingAmount
+                });
+
+                renderOrdersOverview({
+                    totalOrders,
+                    pendingCount,
+                    acceptedCount,
+                    shippedCount,
+                    ofdCount,
+                    deliveredCount,
+                    declinedCount,
+                    deletedCount
+                });
+
+                renderPaymentsOverview({
+                    totalPaid,
+                    totalPending,
+                    totalCompleted,
+                    totalCancelled,
+                    totalRefunded
+                });
+
+                renderActiveShopkeepers(shopkeepers);
+
+            } catch (err) {
+                console.error("❌ Failed to load distributor dashboard data:", err);
+                ordersOverviewEl.innerHTML = `<p style="color:#c00;">Error loading orders.</p>`;
+                paymentsOverviewEl.innerHTML = `<p style="color:#c00;">Error loading payments.</p>`;
+                activeShopkeepersEl.innerHTML = `<li>Error loading shopkeepers.</li>`;
+            }
+        }
+
+        // Sidebar toggle
+        hamburgerBtn.addEventListener('click', () => {
+            sidebar.classList.toggle('active');
+        });
+
+        // Normal navigation for sidebar links
+        navLinks.forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                window.location.href = link.getAttribute("href");
+            });
+        });
+
+        // Logout
+        logoutBtn.addEventListener('click', () => {
+            localStorage.clear();
+            window.location.href = 'fresh-cart-home.html';
+        });
+
         document.addEventListener('DOMContentLoaded', () => {
-            const sidebar = document.getElementById('sidebar');
-            const hamburgerBtn = document.getElementById('hamburger-btn');
-            const navLinks = document.querySelectorAll('.nav-item a');
-            const logoutBtn = document.querySelector('.logout-btn');
-
-            function renderDashboardPage() {
-                const totalProducts = distributorData.products.length;
-                const lowStockProducts = distributorData.products.filter(p => p.stock < 15).length;
-                const totalOrdersReceived = distributorData.orders.filter(o => o.date === new Date().toISOString().split('T')[0]).length; // Mock today's date
-                const totalRevenue = distributorData.payments.filter(p => p.status === 'Paid').reduce((sum, p) => sum + p.amount, 0);
-                const pendingPayments = distributorData.payments.filter(p => p.status === 'Pending').reduce((sum, p) => sum + p.amount, 0);
-
-                const summaryCardsHtml = `
-                    <div class="summary-card"><h3>Total Products</h3><p>${totalProducts}</p></div>
-                    <div class="summary-card"><h3>Low Stock</h3><p>${lowStockProducts}</p></div>
-                    <div class="summary-card"><h3>Orders Received</h3><p>${totalOrdersReceived}</p></div>
-                    <div class="summary-card"><h3>Total Revenue</h3><p>₹${totalRevenue.toFixed(2)}</p></div>
-                    <div class="summary-card"><h3>Pending Payments</h3><p>₹${pendingPayments.toFixed(2)}</p></div>
-                `;
-                document.getElementById('summary-cards').innerHTML = summaryCardsHtml;
-
-                const topProducts = distributorData.products.sort((a, b) => b.sales - a.sales).slice(0, 5);
-                const topProductsHtml = topProducts.map(p => `<li><strong>${p.name}:</strong> ${p.sales} units sold</li>`).join('');
-                document.getElementById('top-products-list').innerHTML = topProductsHtml;
-
-                const activeShopkeepers = distributorData.shopkeepers.sort((a, b) => b.orders - a.orders).slice(0, 5);
-                const activeShopkeepersHtml = activeShopkeepers.map(s => `<li><strong>${s.name}:</strong> ${s.orders} orders</li>`).join('');
-                document.getElementById('active-shopkeepers-list').innerHTML = activeShopkeepersHtml;
-                
-                const quickActionsHtml = `
-                    <div class="quick-action-card"><a href="distributor-products.html"><h3>➕ Add New Product</h3></a></div>
-                    <div class="quick-action-card"><a href="distributor-orders.html"><h3>🚚 Process New Orders</h3></a></div>
-                    <div class="quick-action-card"><a href="distributor-payments.html"><h3>💳 Check Payments</h3></a></div>
-                `;
-                document.getElementById('quick-actions-panel').innerHTML = quickActionsHtml;
-            }
-
-            // --- Event Listeners ---
-            hamburgerBtn.addEventListener('click', () => {
-                sidebar.classList.toggle('active');
-            });
-
-            logoutBtn.addEventListener('click', () => {
-             
-                window.location.href = 'fresh-cart-home.html';
-            });
-            
-            // Initial page load
-            renderDashboardPage();
+            renderQuickActions();
+            fetchDashboardData();
         });
     </script>
 </body>
