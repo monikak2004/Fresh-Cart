@@ -357,165 +357,222 @@
         </div>
     </main>
 </div>
-
 <script>
-document.addEventListener("DOMContentLoaded", () => {
-    const API_BASE = "https://fresh-cart-backend-5.onrender.com";
+  const API_BASE = "https://fresh-cart-backend-5.onrender.com";
 
-    const user = JSON.parse(localStorage.getItem("fc_user") || "{}");
-    const ordersTable = document.getElementById("orders-list");
-    const sidebar = document.getElementById("sidebar");
-    const hamburgerBtn = document.getElementById("hamburger-btn");
-    const logoutBtn = document.querySelector(".logout-btn");
-    const statusFilter = document.getElementById("statusFilter");
-    const orderItemsPanel = document.getElementById("order-items-panel");
+  const user = JSON.parse(localStorage.getItem("fc_user") || "{}");
+  const ordersTableBody = document.getElementById("orders-list");
+  const sidebar       = document.getElementById("sidebar");
+  const hamburgerBtn  = document.getElementById("hamburger-btn");
+  const logoutBtn     = document.querySelector(".logout-btn");
+  const statusFilter  = document.getElementById("statusFilter");
+  const receiptPanel  = document.getElementById("order-items-panel");
 
-    let orders = [];
-    let refreshTimer = null;
+  let orders = [];
+  let refreshTimer = null;
 
-    async function loadOrders(showAnimation = false) {
-        try {
-            if (!user.user_id) {
-                alert("Login required. Redirecting...");
-                window.location.href = "fresh-cart-home.html";
-                return;
-            }
-
-            const res = await fetch(`${API_BASE}/orders/${user.user_id}`);
-            if (!res.ok) throw new Error(`Error fetching orders: ${res.status}`);
-
-            const data = await res.json();
-            updateOrdersUI(data, showAnimation);
-        } catch (err) {
-            console.error("❌ Failed to load orders:", err);
-            ordersTable.innerHTML = `<tr><td colspan="6" style="text-align:center;">Error loading orders.</td></tr>`;
-        }
-    }
-
-    function updateOrdersUI(newOrders, animate) {
-        const oldMap = {};
-        orders.forEach(o => (oldMap[o.order_id] = o));
-
-        ordersTable.innerHTML = "";
-
-        if (!newOrders || newOrders.length === 0) {
-            ordersTable.innerHTML = `<tr><td colspan="6" style="text-align:center;">No orders yet.</td></tr>`;
-            orderItemsPanel.innerHTML = `<h2>Order items</h2><em>No items to show.</em>`;
-            return;
-        }
-
-        const filter = statusFilter.value.toLowerCase();
-        const filtered = filter === "all"
-            ? newOrders
-            : newOrders.filter(o => (o.status || "").toLowerCase() === filter);
-
-        filtered.forEach(order => {
-            const isChanged = animate && oldMap[order.order_id] && oldMap[order.order_id].status !== order.status;
-
-            const row = document.createElement("tr");
-            if (isChanged) {
-                row.style.transition = "background-color 0.5s ease";
-                row.style.backgroundColor = "#e7ffe7";
-                setTimeout(() => (row.style.backgroundColor = ""), 700);
-            }
-
-            row.innerHTML = `
-                <td>${order.order_id}</td>
-                <td>${order.distributor_name || "—"}</td>
-                <td>₹${order.total_amount || order.amount}</td>
-                <td>${new Date(order.order_date).toLocaleString()}</td>
-                <td><span class="status-badge status-${(order.status || "pending").toLowerCase()}">${order.status}</span></td>
-                <td>
-                    <button class="view-items-btn" data-order-id="${order.order_id}">
-                        View items
-                    </button>
-                </td>
-            `;
-            ordersTable.appendChild(row);
-        });
-
-        orders = newOrders;
-    }
-
-    function startAutoRefresh() {
-        stopAutoRefresh();
-        refreshTimer = setInterval(() => loadOrders(true), 6000);
-    }
-
-    function stopAutoRefresh() {
-        if (refreshTimer) clearInterval(refreshTimer);
-        refreshTimer = null;
-    }
-
-    document.addEventListener("visibilitychange", () => {
-        if (document.hidden) stopAutoRefresh(); else startAutoRefresh();
-    });
-
-    hamburgerBtn.addEventListener("click", () => {
-        sidebar.classList.toggle("active");
-    });
-
-    logoutBtn.addEventListener("click", () => {
-        localStorage.clear();
-        window.location.href = "fresh-cart-home.html";
-    });
-
-    statusFilter.addEventListener("change", () => loadOrders());
-
-document.addEventListener("click", async (e) => {
-  if (!e.target.matches(".view-items-btn")) return;
-
-  const orderId = e.target.dataset.orderId;
-
-  try {
-    const res = await fetch(`${API_BASE}/order_items/${orderId}`);
-
-    let items;
+  // ==============================
+  // 🟢 Load Orders from Backend
+  // ==============================
+  async function loadOrders(showAnimation = false) {
     try {
-      items = await res.json();
-    } catch (jsonErr) {
-      console.error("JSON parse error from /order_items:", jsonErr);
-      alert(`Server returned ${res.status} ${res.statusText}, not JSON.`);
-      return;
+      if (!user.user_id) {
+        alert("Login required. Redirecting...");
+        window.location.href = "fresh-cart-home.html";
+        return;
+      }
+
+      const res = await fetch(`${API_BASE}/orders/${user.user_id}`);
+      if (!res.ok) throw new Error(`Error fetching orders: ${res.status}`);
+
+      const data = await res.json();
+      updateOrdersUI(data, showAnimation);
+    } catch (err) {
+      console.error("❌ Failed to load orders:", err);
+      ordersTableBody.innerHTML = `
+        <tr>
+          <td colspan="6" style="text-align:center;">Error loading orders.</td>
+        </tr>`;
+      if (receiptPanel) {
+        receiptPanel.innerHTML = "";
+      }
     }
-
-    if (!res.ok) {
-      console.error("❌ /order_items server error:", items);
-      alert(items.error || `Server error: ${res.status}`);
-      return;
-    }
-
-    const panel = document.getElementById("order-items-panel");
-    if (!panel) return;
-
-    if (!items.length) {
-      panel.innerHTML = `<h2>Order items</h2><em>No items found for this order.</em>`;
-      return;
-    }
-
-    panel.innerHTML = `
-      <h2>Order #${orderId} items</h2>
-      ${items.map(it => `
-        <div class="order-item-row">
-          <strong>${it.product_name} - ${it.subproduct_name}</strong>
-          Brand: ${it.brand} | Qty: ${it.quantity} ${it.unit} | Price: ₹${it.price}
-        </div>
-      `).join("")}
-    `;
-  } catch (err) {
-    console.error("❌ Network / fetch error for /order_items:", err);
-    alert("Network error while fetching items.");
   }
-});
 
+  // ==============================
+  // 🟡 Render Orders into Table
+  // ==============================
+  function updateOrdersUI(newOrders, animate) {
+    const oldMap = {};
+    orders.forEach(o => (oldMap[o.order_id] = o));
 
+    ordersTableBody.innerHTML = "";
 
+    if (!newOrders || newOrders.length === 0) {
+      ordersTableBody.innerHTML = `
+        <tr>
+          <td colspan="6" style="text-align:center;">No orders yet.</td>
+        </tr>`;
+      if (receiptPanel) {
+        receiptPanel.innerHTML = "";
+      }
+      orders = [];
+      return;
+    }
+
+    const filter = statusFilter.value.toLowerCase();
+    const filtered = filter === "all"
+      ? newOrders
+      : newOrders.filter(o => (o.status || "").toLowerCase() === filter);
+
+    filtered.forEach(order => {
+      const isChanged =
+        animate &&
+        oldMap[order.order_id] &&
+        oldMap[order.order_id].status !== order.status;
+
+      const row = document.createElement("tr");
+      if (isChanged) {
+        row.style.transition = "background-color 0.5s ease";
+        row.style.backgroundColor = "#e7ffe7"; // light green flash
+        setTimeout(() => (row.style.backgroundColor = ""), 700);
+      }
+
+      const statusKey = (order.status || "pending").toLowerCase().replace(/\s+/g, "");
+      const total = order.total_amount || order.amount || 0;
+
+      row.innerHTML = `
+        <td>${order.order_id}</td>
+        <td>${order.distributor_name || "—"}</td>
+        <td>₹${Number(total).toFixed(2)}</td>
+        <td>${order.order_date ? new Date(order.order_date).toLocaleString() : "—"}</td>
+        <td>
+          <span class="status-badge status-${statusKey}">
+            ${order.status || "Pending"}
+          </span>
+        </td>
+        <td>
+          <button class="view-receipt-btn" data-order-id="${order.order_id}">
+            View receipt
+          </button>
+        </td>
+      `;
+
+      ordersTableBody.appendChild(row);
+    });
+
+    orders = newOrders;
+  }
+
+  // ==============================
+  // 🧾 Show Receipt (No extra fetch)
+  // ==============================
+  function showReceipt(orderId) {
+    if (!receiptPanel) return;
+
+    const order = orders.find(o => String(o.order_id) === String(orderId));
+    if (!order) {
+      receiptPanel.innerHTML = `
+        <div style="padding:1rem;border-radius:12px;background:#fff3f3;border:1px solid #f5b5b5;">
+          Order #${orderId} not found.
+        </div>`;
+      return;
+    }
+
+    const dateStr = order.order_date
+      ? new Date(order.order_date).toLocaleString()
+      : "—";
+    const total = Number(order.total_amount || order.amount || 0);
+    const paymentStatus = order.payment_status || order.payment_state || "—";
+    const status = order.status || "Pending";
+
+    receiptPanel.innerHTML = `
+      <div style="
+        margin-top:1.5rem;
+        padding:1.25rem 1.5rem;
+        border-radius:12px;
+        background:#ffffff;
+        border:1px solid #dddddd;
+        box-shadow:0 4px 8px rgba(0,0,0,0.05);
+        font-size:0.9rem;
+      ">
+        <h3 style="margin-bottom:0.75rem;font-family:'Montserrat',sans-serif;font-size:1.1rem;">
+          Order Receipt
+        </h3>
+        <div style="margin-bottom:0.75rem;color:#555;">
+          <div><strong>Order ID:</strong> #${order.order_id}</div>
+          <div><strong>Distributor:</strong> ${order.distributor_name || "—"}</div>
+          <div><strong>Date:</strong> ${dateStr}</div>
+          <div><strong>Order status:</strong> ${status}</div>
+          <div><strong>Payment status:</strong> ${paymentStatus}</div>
+        </div>
+        <div style="
+          margin-top:0.75rem;
+          padding-top:0.75rem;
+          border-top:1px dashed #cccccc;
+          display:flex;
+          justify-content:space-between;
+          align-items:center;
+          font-weight:600;
+        ">
+          <span>Total (incl. distributor fee)</span>
+          <span>₹${total.toFixed(2)}</span>
+        </div>
+        <p style="margin-top:0.5rem;font-size:0.8rem;color:#777;">
+          Note: The total includes the ₹30 distributor fee added at checkout.
+        </p>
+      </div>
+    `;
+  }
+
+  // ==============================
+  // 🔁 Auto Refresh every 6s
+  // ==============================
+  function startAutoRefresh() {
+    stopAutoRefresh();
+    refreshTimer = setInterval(() => loadOrders(true), 6000);
+  }
+
+  function stopAutoRefresh() {
+    if (refreshTimer) clearInterval(refreshTimer);
+    refreshTimer = null;
+  }
+
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) stopAutoRefresh();
+    else startAutoRefresh();
+  });
+
+  // ==============================
+  // 🍔 Sidebar + Logout + Filter + Receipt click
+  // ==============================
+  document.addEventListener("DOMContentLoaded", () => {
     loadOrders();
     startAutoRefresh();
-});
+
+    hamburgerBtn?.addEventListener("click", () => {
+      sidebar.classList.toggle("active");
+    });
+
+    logoutBtn?.addEventListener("click", () => {
+      localStorage.clear();
+      window.location.href = "fresh-cart-home.html";
+    });
+
+    statusFilter.addEventListener("change", loadOrders);
+
+    // View receipt button handler (no network fetch)
+    document.addEventListener("click", (e) => {
+      const btn = e.target.closest(".view-receipt-btn");
+      if (!btn) return;
+      const orderId = btn.dataset.orderId;
+      showReceipt(orderId);
+    });
+  });
 </script>
 
 </body>
 </html>
+
 
 
