@@ -199,265 +199,203 @@
     </div>
   </div>
 
- <script>
+<script>
   const API_BASE = "https://fresh-cart-backend-5.onrender.com";
 
   const user = JSON.parse(localStorage.getItem("fc_user") || "{}");
+  const orderList = document.getElementById("order-list");
+  const searchInput = document.getElementById("searchInput");
+  const statusFilter = document.getElementById("statusFilter");
 
-  const sidebar       = document.getElementById('sidebar');
-  const hamburgerBtn  = document.getElementById('hamburger-btn');
-  const orderList     = document.getElementById('order-list');
-  const searchInput   = document.getElementById('searchInput');
-  const statusFilter  = document.getElementById('statusFilter');
-  const activeBtn     = document.getElementById('activeOrdersBtn');
-  const deletedBtn    = document.getElementById('deletedOrdersBtn');
-
-  const receiptMeta       = document.getElementById('receipt-meta');
-  const receiptItems      = document.getElementById('receipt-items');
-  const receiptTotalBox   = document.getElementById('receipt-total');
-  const receiptTotalValue = document.getElementById('receipt-total-value');
+  const itemsPanel = document.createElement("div");
+  itemsPanel.id = "order-items-panel";
+  itemsPanel.style.display = "none";
+  itemsPanel.className = "order-items-panel";
+  document.querySelector(".content-area").appendChild(itemsPanel);
 
   let orders = [];
-  let showDeleted = false;
-  let pollTimer = null;
-  let isUpdating = false;
+  let autoRefreshTimer = null;
 
-  // Sidebar toggle
-  hamburgerBtn?.addEventListener('click', () => {
-    sidebar.classList.toggle('active');
-  });
-
-  // ------------------- LOAD ORDERS -------------------
-  async function loadOrders(silent = false) {
-    if (!user?.user_id) {
-      if (!silent) alert("Please log in again.");
-      return;
-    }
-    const endpoint = showDeleted
-      ? `/distributor/deleted_orders/${user.user_id}`
-      : `/distributor/orders/${user.user_id}`;
-
-    try {
-      const res = await fetch(`${API_BASE}${endpoint}`);
-      const data = await res.json();
-
-      orders = (Array.isArray(data) ? data : []).map(o => ({
-        id: o.order_id,
-        shopkeeper: o.shop_owner,
-        total: o.amount,
-        rawStatus: o.status || "Pending",
-        status: (o.status || "Pending").toLowerCase(),
-        payment_status: (o.payment_status || "").toString(),
-        date: (o.order_date || "").toString(),
-        delete_date: o.delete_date || null
-      }));
-
-      renderOrders();
-    } catch (err) {
-      if (!silent) console.error("❌ Failed to fetch orders:", err);
-    }
+  function formatINR(v) {
+    return "₹" + Number(v || 0).toFixed(2);
   }
 
-  // ------------------- RENDER ORDER CARDS -------------------
-  function renderOrders() {
-    const q = (searchInput.value || "").toLowerCase();
-    const f = (statusFilter.value || "all").toLowerCase();
+  async function loadOrders(animate = false) {
+    if (!user.user_id) return;
 
+    const res = await fetch(`${API_BASE}/distributor/orders/${user.user_id}`);
+    const data = await res.json();
+    renderOrders(data, animate);
+  }
+
+  function renderOrders(newOrders, animate) {
     orderList.innerHTML = "";
 
-    const filtered = orders.filter(o =>
-      (f === "all" || o.status === f) &&
-      (String(o.id).includes(q) || (o.shopkeeper || "").toLowerCase().includes(q))
+    const query = searchInput.value.toLowerCase();
+    const filter = statusFilter.value.toLowerCase();
+
+    const list = newOrders.filter(o =>
+      (filter === "all" || (o.status || "").toLowerCase() === filter) &&
+      (String(o.order_id).includes(query) || (o.shop_owner || "").toLowerCase().includes(query))
     );
 
-    if (filtered.length === 0) {
-      orderList.innerHTML = `<p style="text-align:center;">No ${showDeleted ? "deleted" : "active"} orders found.</p>`;
+    orders = newOrders;
+
+    if (!list.length) {
+      orderList.innerHTML = `<p style="text-align:center;">No matching orders</p>`;
       return;
     }
 
-    filtered.forEach(order => {
-      const statusClass = `status-${order.status.replace(/\s+/g, "-")}`;
-      const dateStr = order.date ? order.date.toString().split("T")[0] : "-";
+    list.forEach(order => {
+      const div = document.createElement("div");
+      const cls = `status-${order.status.toLowerCase().replace(/\s+/g, '-')}`;
 
-      const card = document.createElement('div');
-      card.className = 'order-card';
-      card.innerHTML = `
+      div.className = "order-card";
+      div.innerHTML = `
         <div class="order-header">
-          <span class="order-id">Order #${order.id}</span>
-          <span class="order-status ${statusClass}">${order.status}</span>
+          <span>Order #${order.order_id}</span>
+          <span class="order-status ${cls}">${order.status}</span>
         </div>
         <div class="order-details">
-          <p><strong>Shopkeeper:</strong> ${order.shopkeeper || "-"}</p>
-          <p><strong>Date:</strong> ${dateStr}</p>
-          <p><strong>Total:</strong> ₹${Number(order.total || 0).toFixed(2)}</p>
+          <p><strong>Shopkeeper:</strong> ${order.shop_owner}</p>
+          <p><strong>Date:</strong> ${order.order_date}</p>
+          <p><strong>Total:</strong> ${formatINR(order.amount)}</p>
+
+          <button class="btn-secondary view-items-btn" data-id="${order.order_id}">
+            View Receipt
+          </button>
 
           <div class="action-buttons">
-            <button class="btn-secondary" data-view-id="${order.id}">View receipt</button>
-            ${buildActions(order)}
+            ${renderButtons(order)}
           </div>
         </div>
       `;
-      orderList.appendChild(card);
+      orderList.appendChild(div);
     });
   }
 
-  // ------------------- ACTION BUTTONS -------------------
-  function buildActions(order) {
-    if (showDeleted) {
-      return `<button class="btn-primary" data-restore-id="${order.id}">Restore</button>`;
-    }
-
-    switch (order.status) {
+  function renderButtons(order) {
+    switch ((order.status || "").toLowerCase()) {
       case "pending":
         return `
-          <button class="btn-primary" data-action="Accepted" data-id="${order.id}">Accept</button>
-          <button class="btn-secondary" data-action="Declined" data-id="${order.id}">Decline</button>
-          <button class="btn-secondary" data-delete-id="${order.id}">Delete</button>
+          <button class="btn-primary" data-action="Accepted" data-id="${order.order_id}">Accept</button>
+          <button class="btn-secondary" data-action="Declined" data-id="${order.order_id}">Decline</button>
         `;
       case "accepted":
-        return `<button class="btn-primary" data-action="Shipped" data-id="${order.id}">Mark as Shipped</button>`;
+        return `<button class="btn-primary" data-action="Shipped" data-id="${order.order_id}">Mark Shipped</button>`;
       case "shipped":
-        return `<button class="btn-primary" data-action="Out for Delivery" data-id="${order.id}">Out for Delivery</button>`;
+        return `<button class="btn-primary" data-action="Out for Delivery" data-id="${order.order_id}">Out for Delivery</button>`;
       case "out for delivery":
-        return `<button class="btn-primary" data-action="Delivered" data-id="${order.id}">Mark as Delivered</button>`;
+        return `<button class="btn-primary" data-action="Delivered" data-id="${order.order_id}">Mark Delivered</button>`;
       default:
         return "";
     }
   }
 
-  // ------------------- LOCAL RECEIPT (NO FETCH) -------------------
-  function showReceiptFor(orderId) {
-    const order = orders.find(o => String(o.id) === String(orderId));
-    if (!order) {
-      receiptMeta.textContent = `Order #${orderId} not found.`;
-      receiptItems.innerHTML = "";
-      receiptTotalBox.style.display = "none";
-      return;
-    }
-
-    const dateStr = order.date ? order.date.toString().split("T")[0] : "-";
-    const statusLabel = order.status || "pending";
-    const payStatus   = order.payment_status || "—";
-
-    // Header text
-    receiptMeta.textContent = `Order #${order.id} • ${order.shopkeeper || "-"} • ${dateStr} • Status: ${statusLabel}, Payment: ${payStatus}`;
-
-    // Simple bill-style lines
-    const totalNum = Number(order.total || 0);
-
-    receiptItems.innerHTML = `
-      <div class="receipt-row">
-        <span class="receipt-name">Billed amount</span>
-        <span class="receipt-meta-line">₹${totalNum.toFixed(2)}</span>
-      </div>
-      <div class="receipt-row" style="font-size:0.85rem;color:var(--text-light);margin-top:.25rem;">
-        <span class="receipt-name">Note</span>
-        <span class="receipt-meta-line">Item-wise breakdown is visible in the shop owner view. This receipt shows the final billed amount for this distributor.</span>
-      </div>
-    `;
-
-    receiptTotalBox.style.display = "flex";
-    receiptTotalValue.textContent = "₹" + totalNum.toFixed(2);
-  }
-
-  // ------------------- EVENT DELEGATION -------------------
-  orderList.addEventListener('click', async (e) => {
-    const viewBtn    = e.target.closest('[data-view-id]');
-    const actionBtn  = e.target.closest('[data-action]');
-    const deleteBtn  = e.target.closest('[data-delete-id]');
-    const restoreBtn = e.target.closest('[data-restore-id]');
-    if (!viewBtn && !actionBtn && !deleteBtn && !restoreBtn) return;
-
-    // Just show local receipt (no API call)
-    if (viewBtn) {
-      const id = viewBtn.getAttribute('data-view-id');
-      showReceiptFor(id);
-      return;
-    }
+  // 📦 Load Receipt Items
+  async function loadReceipt(orderId) {
+    itemsPanel.style.display = "block";
+    itemsPanel.innerHTML = `<div class="order-items-message">Loading receipt...</div>`;
 
     try {
-      isUpdating = true;
+      const res = await fetch(`${API_BASE}/order_items/${orderId}`);
+      const data = await res.json();
 
-      if (actionBtn) {
-        const id = actionBtn.getAttribute('data-id');
-        const newStatus = actionBtn.getAttribute('data-action');
-        await updateStatus(id, newStatus);
-      } else if (deleteBtn) {
-        const id = deleteBtn.getAttribute('data-delete-id');
-        if (!confirm(`Delete order #${id}? It will be kept for 30 days.`)) return;
-        await softDelete(id);
-      } else if (restoreBtn) {
-        const id = restoreBtn.getAttribute('data-restore-id');
-        await restoreOrder(id);
+      if (!Array.isArray(data) || !data.length) {
+        itemsPanel.innerHTML = `<p class="order-items-message">No products found in this order.</p>`;
+        return;
       }
-    } finally {
-      await loadOrders(true);
-      isUpdating = false;
-    }
-  });
 
-  async function updateStatus(orderId, status) {
-    const res = await fetch(`${API_BASE}/distributor/update_status/${orderId}`, {
-      method:"PUT",
-      headers:{ "Content-Type":"application/json" },
-      body: JSON.stringify({ status })
-    });
-    if (!res.ok) {
-      const t = await res.text();
-      throw new Error(t || "Failed to update status");
+      renderReceipt(orderId, data);
+    } catch {
+      itemsPanel.innerHTML = `<p class="order-items-message">Failed to load receipt.</p>`;
     }
   }
 
-  async function softDelete(orderId) {
-    const res = await fetch(`${API_BASE}/distributor/delete_order/${orderId}`, { method:"PUT" });
-    if (!res.ok) throw new Error("Delete failed");
+  function renderReceipt(orderId, items) {
+    const order = orders.find(o => o.order_id === orderId);
+    let total = 0;
+
+    const rows = items.map((it, i) => {
+      const qty = Number(it.quantity || 0);
+      const price = Number(it.price || it.price_per_unit || 0);
+      const line = qty * price;
+      total += line;
+
+      return `
+        <tr>
+          <td>${i + 1}</td>
+          <td>${it.product_name || it.name}</td>
+          <td>${qty} ${it.unit}</td>
+          <td>${formatINR(price)}</td>
+          <td>${formatINR(line)}</td>
+        </tr>
+      `;
+    }).join("");
+
+    itemsPanel.innerHTML = `
+      <div class="order-items-header">
+        <h2>Receipt – Order #${orderId}</h2>
+        <div class="order-items-meta">
+          Shop Owner: ${order.shop_owner}<br>
+          Status: ${order.status}
+        </div>
+      </div>
+
+      <table class="receipt-items-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Product</th>
+            <th>Quantity</th>
+            <th>Rate</th>
+            <th>Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rows}
+          <tr>
+            <td colspan="4" style="text-align:right;font-weight:700;">Grand Total</td>
+            <td style="font-weight:700;">${formatINR(order.amount || total)}</td>
+          </tr>
+        </tbody>
+      </table>
+    `;
+    itemsPanel.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
-  async function restoreOrder(orderId) {
-    const res = await fetch(`${API_BASE}/distributor/restore_order/${orderId}`, { method:"PUT" });
-    if (!res.ok) throw new Error("Restore failed");
-  }
+  // EVENT HANDLERS
+  document.addEventListener("click", async e => {
+    if (e.target.matches(".view-items-btn")) {
+      loadReceipt(e.target.dataset.id);
+    }
 
-  // ------------------- FILTERS + POLLING -------------------
-  searchInput?.addEventListener('input', renderOrders);
-  statusFilter?.addEventListener('change', renderOrders);
+    if (e.target.dataset.action) {
+      const id = e.target.dataset.id;
+      const status = e.target.dataset.action;
 
-  activeBtn?.addEventListener('click', () => {
-    showDeleted = false;
-    activeBtn.className = "btn-primary";
-    deletedBtn.className = "btn-secondary";
+      await fetch(`${API_BASE}/distributor/update_status/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status })
+      });
+
+      loadOrders(true);
+    }
+  });
+
+  searchInput.addEventListener("input", () => renderOrders(orders));
+  statusFilter.addEventListener("change", () => renderOrders(orders));
+
+  document.addEventListener("DOMContentLoaded", () => {
     loadOrders();
-  });
-
-  deletedBtn?.addEventListener('click', () => {
-    showDeleted = true;
-    activeBtn.className = "btn-secondary";
-    deletedBtn.className = "btn-primary";
-    loadOrders();
-  });
-
-  function startPolling() {
-    stopPolling();
-    pollTimer = setInterval(() => {
-      if (!isUpdating) loadOrders(true);
-    }, 6000);
-  }
-  function stopPolling() {
-    if (pollTimer) clearInterval(pollTimer);
-    pollTimer = null;
-  }
-
-  document.addEventListener('visibilitychange', () => {
-    if (document.hidden) stopPolling(); else startPolling();
-  });
-
-  document.addEventListener('DOMContentLoaded', async () => {
-    await loadOrders();
-    startPolling();
+    setInterval(() => loadOrders(true), 6000);
   });
 </script>
 
+
 </body>
 </html>
+
 
 
