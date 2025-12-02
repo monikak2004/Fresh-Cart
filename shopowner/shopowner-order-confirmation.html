@@ -116,6 +116,11 @@ async function loadOrderDetails() {
         <p style="color:#b00;">No details found for Order #${orderId}</p>`;
       return;
     }
+    console.log("Matched order:", order); // 👈 helps you confirm the values
+       // ✅ Prefer `amount`, fall back to `total_amount`
+      const rawTotal =
+        (order.amount !== undefined && order.amount !== null ? order.amount : order.total_amount);
+      const totalNumber = Number(rawTotal) || 0;
 
     // ✅ Populate order confirmation details
     document.getElementById("order-id").textContent = order.order_id;
@@ -138,4 +143,5 @@ document.addEventListener("DOMContentLoaded", loadOrderDetails);
   </script>
 </body>
 </html>
+
 
