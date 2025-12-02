@@ -199,283 +199,265 @@
     </div>
   </div>
 
-  <script>
-    const API_BASE = "https://fresh-cart-backend-5.onrender.com";
+ <script>
+  const API_BASE = "https://fresh-cart-backend-5.onrender.com";
 
-    const user = JSON.parse(localStorage.getItem("fc_user") || "{}");
+  const user = JSON.parse(localStorage.getItem("fc_user") || "{}");
 
-    const sidebar       = document.getElementById('sidebar');
-    const hamburgerBtn  = document.getElementById('hamburger-btn');
-    const orderList     = document.getElementById('order-list');
-    const searchInput   = document.getElementById('searchInput');
-    const statusFilter  = document.getElementById('statusFilter');
-    const activeBtn     = document.getElementById('activeOrdersBtn');
-    const deletedBtn    = document.getElementById('deletedOrdersBtn');
+  const sidebar       = document.getElementById('sidebar');
+  const hamburgerBtn  = document.getElementById('hamburger-btn');
+  const orderList     = document.getElementById('order-list');
+  const searchInput   = document.getElementById('searchInput');
+  const statusFilter  = document.getElementById('statusFilter');
+  const activeBtn     = document.getElementById('activeOrdersBtn');
+  const deletedBtn    = document.getElementById('deletedOrdersBtn');
 
-    const receiptPanel      = document.getElementById('receipt-panel');
-    const receiptMeta       = document.getElementById('receipt-meta');
-    const receiptItems      = document.getElementById('receipt-items');
-    const receiptTotalBox   = document.getElementById('receipt-total');
-    const receiptTotalValue = document.getElementById('receipt-total-value');
+  const receiptMeta       = document.getElementById('receipt-meta');
+  const receiptItems      = document.getElementById('receipt-items');
+  const receiptTotalBox   = document.getElementById('receipt-total');
+  const receiptTotalValue = document.getElementById('receipt-total-value');
 
-    let orders = [];
-    let showDeleted = false;
-    let pollTimer = null;
-    let isUpdating = false;
+  let orders = [];
+  let showDeleted = false;
+  let pollTimer = null;
+  let isUpdating = false;
 
-    // Sidebar toggle
-    hamburgerBtn?.addEventListener('click', () => {
-      sidebar.classList.toggle('active');
+  // Sidebar toggle
+  hamburgerBtn?.addEventListener('click', () => {
+    sidebar.classList.toggle('active');
+  });
+
+  // ------------------- LOAD ORDERS -------------------
+  async function loadOrders(silent = false) {
+    if (!user?.user_id) {
+      if (!silent) alert("Please log in again.");
+      return;
+    }
+    const endpoint = showDeleted
+      ? `/distributor/deleted_orders/${user.user_id}`
+      : `/distributor/orders/${user.user_id}`;
+
+    try {
+      const res = await fetch(`${API_BASE}${endpoint}`);
+      const data = await res.json();
+
+      orders = (Array.isArray(data) ? data : []).map(o => ({
+        id: o.order_id,
+        shopkeeper: o.shop_owner,
+        total: o.amount,
+        rawStatus: o.status || "Pending",
+        status: (o.status || "Pending").toLowerCase(),
+        payment_status: (o.payment_status || "").toString(),
+        date: (o.order_date || "").toString(),
+        delete_date: o.delete_date || null
+      }));
+
+      renderOrders();
+    } catch (err) {
+      if (!silent) console.error("❌ Failed to fetch orders:", err);
+    }
+  }
+
+  // ------------------- RENDER ORDER CARDS -------------------
+  function renderOrders() {
+    const q = (searchInput.value || "").toLowerCase();
+    const f = (statusFilter.value || "all").toLowerCase();
+
+    orderList.innerHTML = "";
+
+    const filtered = orders.filter(o =>
+      (f === "all" || o.status === f) &&
+      (String(o.id).includes(q) || (o.shopkeeper || "").toLowerCase().includes(q))
+    );
+
+    if (filtered.length === 0) {
+      orderList.innerHTML = `<p style="text-align:center;">No ${showDeleted ? "deleted" : "active"} orders found.</p>`;
+      return;
+    }
+
+    filtered.forEach(order => {
+      const statusClass = `status-${order.status.replace(/\s+/g, "-")}`;
+      const dateStr = order.date ? order.date.toString().split("T")[0] : "-";
+
+      const card = document.createElement('div');
+      card.className = 'order-card';
+      card.innerHTML = `
+        <div class="order-header">
+          <span class="order-id">Order #${order.id}</span>
+          <span class="order-status ${statusClass}">${order.status}</span>
+        </div>
+        <div class="order-details">
+          <p><strong>Shopkeeper:</strong> ${order.shopkeeper || "-"}</p>
+          <p><strong>Date:</strong> ${dateStr}</p>
+          <p><strong>Total:</strong> ₹${Number(order.total || 0).toFixed(2)}</p>
+
+          <div class="action-buttons">
+            <button class="btn-secondary" data-view-id="${order.id}">View receipt</button>
+            ${buildActions(order)}
+          </div>
+        </div>
+      `;
+      orderList.appendChild(card);
     });
+  }
 
-    // ------------------- LOAD ORDERS (no items yet) -------------------
-    async function loadOrders(silent = false) {
-      if (!user?.user_id) {
-        if (!silent) alert("Please log in again.");
-        return;
-      }
-      const endpoint = showDeleted
-        ? `/distributor/deleted_orders/${user.user_id}`
-        : `/distributor/orders/${user.user_id}`;
-
-      try {
-        const res = await fetch(`${API_BASE}${endpoint}`);
-        const data = await res.json();
-
-        orders = (Array.isArray(data) ? data : []).map(o => ({
-          id: o.order_id,
-          shopkeeper: o.shop_owner,
-          total: o.amount,
-          rawStatus: o.status || "Pending",
-          status: (o.status || "Pending").toLowerCase(),
-          date: (o.order_date || "").toString(),
-          delete_date: o.delete_date || null
-        }));
-
-        renderOrders();
-      } catch (err) {
-        if (!silent) console.error("❌ Failed to fetch orders:", err);
-      }
+  // ------------------- ACTION BUTTONS -------------------
+  function buildActions(order) {
+    if (showDeleted) {
+      return `<button class="btn-primary" data-restore-id="${order.id}">Restore</button>`;
     }
 
-    // ------------------- RENDER ORDER CARDS -------------------
-    function renderOrders() {
-      const q = (searchInput.value || "").toLowerCase();
-      const f = (statusFilter.value || "all").toLowerCase();
-
-      orderList.innerHTML = "";
-
-      const filtered = orders.filter(o =>
-        (f === "all" || o.status === f) &&
-        (String(o.id).includes(q) || (o.shopkeeper || "").toLowerCase().includes(q))
-      );
-
-      if (filtered.length === 0) {
-        orderList.innerHTML = `<p style="text-align:center;">No ${showDeleted ? "deleted" : "active"} orders found.</p>`;
-        return;
-      }
-
-      filtered.forEach(order => {
-        const statusClass = `status-${order.status.replace(/\s+/g, "-")}`;
-        const dateStr = order.date ? order.date.toString().split("T")[0] : "-";
-
-        const card = document.createElement('div');
-        card.className = 'order-card';
-        card.innerHTML = `
-          <div class="order-header">
-            <span class="order-id">Order #${order.id}</span>
-            <span class="order-status ${statusClass}">${order.status}</span>
-          </div>
-          <div class="order-details">
-            <p><strong>Shopkeeper:</strong> ${order.shopkeeper || "-"}</p>
-            <p><strong>Date:</strong> ${dateStr}</p>
-            <p><strong>Total:</strong> ₹${order.total}</p>
-
-            <div class="action-buttons">
-              <button class="btn-secondary" data-view-id="${order.id}">View items</button>
-              ${buildActions(order)}
-            </div>
-          </div>
+    switch (order.status) {
+      case "pending":
+        return `
+          <button class="btn-primary" data-action="Accepted" data-id="${order.id}">Accept</button>
+          <button class="btn-secondary" data-action="Declined" data-id="${order.id}">Decline</button>
+          <button class="btn-secondary" data-delete-id="${order.id}">Delete</button>
         `;
-        orderList.appendChild(card);
-      });
+      case "accepted":
+        return `<button class="btn-primary" data-action="Shipped" data-id="${order.id}">Mark as Shipped</button>`;
+      case "shipped":
+        return `<button class="btn-primary" data-action="Out for Delivery" data-id="${order.id}">Out for Delivery</button>`;
+      case "out for delivery":
+        return `<button class="btn-primary" data-action="Delivered" data-id="${order.id}">Mark as Delivered</button>`;
+      default:
+        return "";
     }
+  }
 
-    // ------------------- ACTION BUTTONS -------------------
-    function buildActions(order) {
-      if (showDeleted) {
-        return `<button class="btn-primary" data-restore-id="${order.id}">Restore</button>`;
-      }
-
-      switch (order.status) {
-        case "pending":
-          return `
-            <button class="btn-primary" data-action="Accepted" data-id="${order.id}">Accept</button>
-            <button class="btn-secondary" data-action="Declined" data-id="${order.id}">Decline</button>
-            <button class="btn-secondary" data-delete-id="${order.id}">Delete</button>
-          `;
-        case "accepted":
-          return `<button class="btn-primary" data-action="Shipped" data-id="${order.id}">Mark as Shipped</button>`;
-        case "shipped":
-          return `<button class="btn-primary" data-action="Out for Delivery" data-id="${order.id}">Out for Delivery</button>`;
-        case "out for delivery":
-          return `<button class="btn-primary" data-action="Delivered" data-id="${order.id}">Mark as Delivered</button>`;
-        default:
-          return "";
-      }
-    }
-
-    // ------------------- LOAD + SHOW RECEIPT (VIEW ITEMS) -------------------
-    async function loadOrderItems(orderId) {
-      receiptMeta.textContent = `Loading items for order #${orderId}...`;
+  // ------------------- LOCAL RECEIPT (NO FETCH) -------------------
+  function showReceiptFor(orderId) {
+    const order = orders.find(o => String(o.id) === String(orderId));
+    if (!order) {
+      receiptMeta.textContent = `Order #${orderId} not found.`;
       receiptItems.innerHTML = "";
       receiptTotalBox.style.display = "none";
+      return;
+    }
 
-      try {
-        const res = await fetch(`${API_BASE}/order_items/${orderId}`);
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || "Failed to load items");
+    const dateStr = order.date ? order.date.toString().split("T")[0] : "-";
+    const statusLabel = order.status || "pending";
+    const payStatus   = order.payment_status || "—";
 
-        const items = Array.isArray(data) ? data : [];
-        if (!items.length) {
-          receiptMeta.textContent = `No items found for order #${orderId}.`;
-          return;
-        }
+    // Header text
+    receiptMeta.textContent = `Order #${order.id} • ${order.shopkeeper || "-"} • ${dateStr} • Status: ${statusLabel}, Payment: ${payStatus}`;
 
-        let total = 0;
-        receiptMeta.textContent = `Order #${orderId} • ${items.length} item${items.length>1?"s":""}`;
-        receiptItems.innerHTML = items.map((it, idx) => {
-          const name =
-            `${it.product_name || ""} ${it.subproduct_name || ""}`.trim() ||
-            it.name || `Item ${idx+1}`;
+    // Simple bill-style lines
+    const totalNum = Number(order.total || 0);
 
-          const qty   = it.quantity ?? it.qty ?? it.order_quantity ?? 0;
-          const unit  = it.unit || "";
-          const price = it.price ?? it.price_per_unit ?? it.unit_price ?? 0;
+    receiptItems.innerHTML = `
+      <div class="receipt-row">
+        <span class="receipt-name">Billed amount</span>
+        <span class="receipt-meta-line">₹${totalNum.toFixed(2)}</span>
+      </div>
+      <div class="receipt-row" style="font-size:0.85rem;color:var(--text-light);margin-top:.25rem;">
+        <span class="receipt-name">Note</span>
+        <span class="receipt-meta-line">Item-wise breakdown is visible in the shop owner view. This receipt shows the final billed amount for this distributor.</span>
+      </div>
+    `;
 
-          const qNum = Number(qty) || 0;
-          const pNum = Number(price) || 0;
-          const line = qNum * pNum;
-          total += line;
+    receiptTotalBox.style.display = "flex";
+    receiptTotalValue.textContent = "₹" + totalNum.toFixed(2);
+  }
 
-          return `
-            <div class="receipt-row">
-              <span class="receipt-name">${name}</span>
-              <span class="receipt-meta-line">
-                ${qNum} ${unit}
-                × ₹${pNum.toFixed(2)}
-                = ₹${line.toFixed(2)}
-              </span>
-            </div>
-          `;
-        }).join("");
+  // ------------------- EVENT DELEGATION -------------------
+  orderList.addEventListener('click', async (e) => {
+    const viewBtn    = e.target.closest('[data-view-id]');
+    const actionBtn  = e.target.closest('[data-action]');
+    const deleteBtn  = e.target.closest('[data-delete-id]');
+    const restoreBtn = e.target.closest('[data-restore-id]');
+    if (!viewBtn && !actionBtn && !deleteBtn && !restoreBtn) return;
 
-        receiptTotalBox.style.display = "flex";
-        receiptTotalValue.textContent = "₹" + total.toFixed(2);
-      } catch (err) {
-        console.error("Failed to load items:", err);
-        receiptMeta.textContent = `Failed to load items for order #${orderId}.`;
-        receiptItems.innerHTML = "";
-        receiptTotalBox.style.display = "none";
+    // Just show local receipt (no API call)
+    if (viewBtn) {
+      const id = viewBtn.getAttribute('data-view-id');
+      showReceiptFor(id);
+      return;
+    }
+
+    try {
+      isUpdating = true;
+
+      if (actionBtn) {
+        const id = actionBtn.getAttribute('data-id');
+        const newStatus = actionBtn.getAttribute('data-action');
+        await updateStatus(id, newStatus);
+      } else if (deleteBtn) {
+        const id = deleteBtn.getAttribute('data-delete-id');
+        if (!confirm(`Delete order #${id}? It will be kept for 30 days.`)) return;
+        await softDelete(id);
+      } else if (restoreBtn) {
+        const id = restoreBtn.getAttribute('data-restore-id');
+        await restoreOrder(id);
       }
+    } finally {
+      await loadOrders(true);
+      isUpdating = false;
     }
+  });
 
-    // ------------------- EVENT DELEGATION -------------------
-    orderList.addEventListener('click', async (e) => {
-      const viewBtn    = e.target.closest('[data-view-id]');
-      const actionBtn  = e.target.closest('[data-action]');
-      const deleteBtn  = e.target.closest('[data-delete-id]');
-      const restoreBtn = e.target.closest('[data-restore-id]');
-      if (!viewBtn && !actionBtn && !deleteBtn && !restoreBtn) return;
-
-      // View items (no reload)
-      if (viewBtn) {
-        const id = viewBtn.getAttribute('data-view-id');
-        loadOrderItems(id);
-        return;
-      }
-
-      try {
-        isUpdating = true;
-
-        if (actionBtn) {
-          const id = actionBtn.getAttribute('data-id');
-          const newStatus = actionBtn.getAttribute('data-action');
-          await updateStatus(id, newStatus);
-        } else if (deleteBtn) {
-          const id = deleteBtn.getAttribute('data-delete-id');
-          if (!confirm(`Delete order #${id}? It will be kept for 30 days.`)) return;
-          await softDelete(id);
-        } else if (restoreBtn) {
-          const id = restoreBtn.getAttribute('data-restore-id');
-          await restoreOrder(id);
-        }
-      } finally {
-        await loadOrders(true);
-        isUpdating = false;
-      }
+  async function updateStatus(orderId, status) {
+    const res = await fetch(`${API_BASE}/distributor/update_status/${orderId}`, {
+      method:"PUT",
+      headers:{ "Content-Type":"application/json" },
+      body: JSON.stringify({ status })
     });
-
-    async function updateStatus(orderId, status) {
-      const res = await fetch(`${API_BASE}/distributor/update_status/${orderId}`, {
-        method:"PUT",
-        headers:{ "Content-Type":"application/json" },
-        body: JSON.stringify({ status })
-      });
-      if (!res.ok) {
-        const t = await res.text();
-        throw new Error(t || "Failed to update status");
-      }
+    if (!res.ok) {
+      const t = await res.text();
+      throw new Error(t || "Failed to update status");
     }
+  }
 
-    async function softDelete(orderId) {
-      const res = await fetch(`${API_BASE}/distributor/delete_order/${orderId}`, { method:"PUT" });
-      if (!res.ok) throw new Error("Delete failed");
-    }
+  async function softDelete(orderId) {
+    const res = await fetch(`${API_BASE}/distributor/delete_order/${orderId}`, { method:"PUT" });
+    if (!res.ok) throw new Error("Delete failed");
+  }
 
-    async function restoreOrder(orderId) {
-      const res = await fetch(`${API_BASE}/distributor/restore_order/${orderId}`, { method:"PUT" });
-      if (!res.ok) throw new Error("Restore failed");
-    }
+  async function restoreOrder(orderId) {
+    const res = await fetch(`${API_BASE}/distributor/restore_order/${orderId}`, { method:"PUT" });
+    if (!res.ok) throw new Error("Restore failed");
+  }
 
-    // ------------------- FILTERS + POLLING -------------------
-    searchInput?.addEventListener('input', renderOrders);
-    statusFilter?.addEventListener('change', renderOrders);
+  // ------------------- FILTERS + POLLING -------------------
+  searchInput?.addEventListener('input', renderOrders);
+  statusFilter?.addEventListener('change', renderOrders);
 
-    activeBtn?.addEventListener('click', () => {
-      showDeleted = false;
-      activeBtn.className = "btn-primary";
-      deletedBtn.className = "btn-secondary";
-      loadOrders();
-    });
+  activeBtn?.addEventListener('click', () => {
+    showDeleted = false;
+    activeBtn.className = "btn-primary";
+    deletedBtn.className = "btn-secondary";
+    loadOrders();
+  });
 
-    deletedBtn?.addEventListener('click', () => {
-      showDeleted = true;
-      activeBtn.className = "btn-secondary";
-      deletedBtn.className = "btn-primary";
-      loadOrders();
-    });
+  deletedBtn?.addEventListener('click', () => {
+    showDeleted = true;
+    activeBtn.className = "btn-secondary";
+    deletedBtn.className = "btn-primary";
+    loadOrders();
+  });
 
-    function startPolling() {
-      stopPolling();
-      pollTimer = setInterval(() => {
-        if (!isUpdating) loadOrders(true);
-      }, 6000);
-    }
-    function stopPolling() {
-      if (pollTimer) clearInterval(pollTimer);
-      pollTimer = null;
-    }
+  function startPolling() {
+    stopPolling();
+    pollTimer = setInterval(() => {
+      if (!isUpdating) loadOrders(true);
+    }, 6000);
+  }
+  function stopPolling() {
+    if (pollTimer) clearInterval(pollTimer);
+    pollTimer = null;
+  }
 
-    document.addEventListener('visibilitychange', () => {
-      if (document.hidden) stopPolling(); else startPolling();
-    });
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) stopPolling(); else startPolling();
+  });
 
-    document.addEventListener('DOMContentLoaded', async () => {
-      await loadOrders();
-      startPolling();
-    });
-  </script>
+  document.addEventListener('DOMContentLoaded', async () => {
+    await loadOrders();
+    startPolling();
+  });
+</script>
+
 </body>
 </html>
+
 
