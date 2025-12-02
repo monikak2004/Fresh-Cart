@@ -126,7 +126,9 @@ async function loadOrderDetails() {
     document.getElementById("order-id").textContent = order.order_id;
     document.getElementById("order-status").textContent = order.status;
     document.getElementById("payment-status").textContent = order.payment_status;
-    document.getElementById("order-total").textContent = "₹" + (order.total_amount || order.amount);
+   const totalNumber = Number(order.total_amount || 0);
+document.getElementById("order-total").textContent = "₹" + totalNumber.toFixed(2);
+
     document.getElementById("order-date").textContent = new Date(order.order_date).toLocaleString();
     document.getElementById("distributor-name").textContent = distributor.name || "Fresh Distributor";
 
@@ -143,5 +145,6 @@ document.addEventListener("DOMContentLoaded", loadOrderDetails);
   </script>
 </body>
 </html>
+
 
 
