@@ -66,85 +66,86 @@
   <div class="confirmation-box">
     <h1>✅ Order Placed Successfully!</h1>
     <p>Thank you for your order. Here are your order details:</p>
-<div id="order-summary" style="text-align:center; margin-top: 5rem;">
-  <h2 style="color:#333;">✅ Order Confirmed!</h2>
-  <p><strong>Order ID:</strong> <span id="order-id">--</span></p>
-  <p><strong>Status:</strong> <span id="order-status">--</span></p>
-  <p><strong>Payment Status:</strong> <span id="payment-status">--</span></p>
-  <p><strong>Distributor:</strong> <span id="distributor-name">--</span></p>
-  <p><strong>Total Amount:</strong> <span id="order-total">--</span></p>
-  <p><strong>Order Date:</strong> <span id="order-date">--</span></p>
 
-  <button onclick="window.location.href='shopowner-orders.html'" 
-          style="margin-top:1.5rem; padding:0.8rem 2rem; 
-          background:#333; color:white; border:none; border-radius:8px; cursor:pointer;">
-    View My Orders
-  </button>
-</div>
+    <div id="order-summary" style="text-align:center; margin-top: 5rem;">
+      <h2 style="color:#333;">✅ Order Confirmed!</h2>
+      <p><strong>Order ID:</strong> <span id="order-id">--</span></p>
+      <p><strong>Status:</strong> <span id="order-status">--</span></p>
+      <p><strong>Payment Status:</strong> <span id="payment-status">--</span></p>
+      <p><strong>Distributor:</strong> <span id="distributor-name">--</span></p>
+      <p><strong>Total Amount:</strong> <span id="order-total">--</span></p>
+      <p><strong>Order Date:</strong> <span id="order-date">--</span></p>
 
+      <button onclick="window.location.href='shopowner-orders.html'" 
+              style="margin-top:1.5rem; padding:0.8rem 2rem; 
+              background:#333; color:white; border:none; border-radius:8px; cursor:pointer;">
+        View My Orders
+      </button>
+    </div>
 
     <a href="shopowner-dashboard.html" class="btn-go-home">Go to Dashboard</a>
   </div>
- 
 
+  <script>
+    const API_BASE = "https://fresh-cart-backend-5.onrender.com";
 
-<script>
-  const API_BASE = "https://fresh-cart-backend-5.onrender.com";
+    const user = JSON.parse(localStorage.getItem("fc_user") || "{}");
+    const orderId = localStorage.getItem("order_id");
 
-const user = JSON.parse(localStorage.getItem("fc_user") || "{}");
-const orderId = localStorage.getItem("order_id");
+    async function loadOrderDetails() {
+      if (!orderId || !user.user_id) {
+        alert("Order not found. Redirecting to orders page...");
+        window.location.href = "shopowner-orders.html";
+        return;
+      }
 
-async function loadOrderDetails() {
-  if (!orderId || !user.user_id) {
-    alert("Order not found. Redirecting to orders page...");
-    window.location.href = "shopowner-orders.html";
-    return;
-  }
+      try {
+        // Fetch all orders for this user
+        const res = await fetch(`${API_BASE}/orders/${user.user_id}`);
+        if (!res.ok) {
+          throw new Error(`Failed to fetch orders (${res.status})`);
+        }
 
-  try {
-    // Fetch all orders for this user
-    const res = await fetch(`${API_BASE}/orders/${user.user_id}`);
-    const orders = await res.json();
+        const orders = await res.json();
 
-    // Find the current order
-    const order = orders.find(o => o.order_id == orderId);
-    const distributor = JSON.parse(localStorage.getItem("selected_distributor") || "{}");
+        // Find the current order
+        const order = orders.find(o => o.order_id == orderId);
+        const distributor = JSON.parse(localStorage.getItem("selected_distributor") || "{}");
 
-    // If order not found
-    if (!order) {
-      document.getElementById("order-summary").innerHTML = `
-        <p style="color:#b00;">No details found for Order #${orderId}</p>`;
-      return;
+        // If order not found
+        if (!order) {
+          document.getElementById("order-summary").innerHTML = `
+            <p style="color:#b00;">No details found for Order #${orderId}</p>`;
+          return;
+        }
+
+        console.log("Matched order:", order);
+
+        // ✅ Use total_amount from backend (fallback to amount just in case)
+        const totalNumber = Number(
+          order.total_amount ?? order.amount ?? 0
+        );
+
+        // ✅ Populate order confirmation details
+        document.getElementById("order-id").textContent = order.order_id;
+        document.getElementById("order-status").textContent = order.status;
+        document.getElementById("payment-status").textContent = order.payment_status;
+        document.getElementById("order-total").textContent = "₹" + totalNumber.toFixed(2);
+        document.getElementById("order-date").textContent =
+          order.order_date ? new Date(order.order_date).toLocaleString() : "-";
+        document.getElementById("distributor-name").textContent =
+          distributor.name || order.distributor_name || "Fresh Distributor";
+
+      } catch (err) {
+        console.error("❌ Error fetching order:", err);
+        document.getElementById("order-summary").innerHTML =
+          `<p style="color:#b00;">Failed to load order details.</p>`;
+      }
     }
-    console.log("Matched order:", order); // 👈 helps you confirm the values
-       // ✅ Prefer `amount`, fall back to `total_amount`
-      const rawTotal =
-        (order.amount !== undefined && order.amount !== null ? order.amount : order.total_amount);
-      const totalNumber = Number(rawTotal) || 0;
 
-    // ✅ Populate order confirmation details
-    document.getElementById("order-id").textContent = order.order_id;
-    document.getElementById("order-status").textContent = order.status;
-    document.getElementById("payment-status").textContent = order.payment_status;
-   const totalNumber = Number(order.total_amount || 0);
-document.getElementById("order-total").textContent = "₹" + totalNumber.toFixed(2);
-
-    document.getElementById("order-date").textContent = new Date(order.order_date).toLocaleString();
-    document.getElementById("distributor-name").textContent = distributor.name || "Fresh Distributor";
-
-  } catch (err) {
-    console.error("❌ Error fetching order:", err);
-    document.getElementById("order-summary").innerHTML = `<p style="color:#b00;">Failed to load order details.</p>`;
-  }
-}
-
-document.addEventListener("DOMContentLoaded", loadOrderDetails);
-</script>
-
-
+    document.addEventListener("DOMContentLoaded", loadOrderDetails);
   </script>
 </body>
 </html>
-
 
 
