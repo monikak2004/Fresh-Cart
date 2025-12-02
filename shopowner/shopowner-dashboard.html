@@ -157,6 +157,17 @@
             position: relative;
         }
 
+        .cart-count {
+            position: absolute;
+            top: -6px;
+            right: -10px;
+            background: #dc3545;
+            color: #fff;
+            font-size: 0.7rem;
+            padding: 2px 6px;
+            border-radius: 999px;
+        }
+
         /* --- Main Content Area --- */
         .main-content {
             padding: 2rem;
@@ -219,14 +230,12 @@
         }
 
         .analytics-placeholder {
-            height: 200px;
+            min-height: 120px;
             background-color: var(--secondary-light);
             border-radius: 8px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            padding: 1rem;
             color: var(--text-light);
-            font-style: italic;
+            font-size: 0.9rem;
         }
         
         .notification-item {
@@ -321,14 +330,17 @@
         <main class="main-content">
             <h1 class="page-title">Shopowner Dashboard</h1>
             
-            <div class="summary-cards-shopowner" id="summary-cards">
-                </div>
+            <div class="summary-cards-shopowner" id="summary-cards"></div>
 
-            <h2 style="font-family: var(--font-body); font-weight: 500; margin-bottom: 1rem;">Order Status Snapshot</h2>
+            <h2 style="font-family: var(--font-body); font-weight: 500; margin-bottom: 1rem;">
+                Order Status Snapshot
+            </h2>
             <div class="analytics-section">
                 <div class="analytics-card">
                     <h3>Current Orders</h3>
-                    <div class="analytics-placeholder">Pie chart of order statuses would go here</div>
+                    <div class="analytics-placeholder" id="order-status-snapshot">
+                        Loading live snapshot...
+                    </div>
                 </div>
                 <div class="analytics-card">
                     <h3>Notifications</h3>
@@ -336,59 +348,35 @@
                 </div>
             </div>
 
-            <h2 style="font-family: var(--font-body); font-weight: 500; margin-bottom: 1rem;">Quick Actions</h2>
-            <div class="quick-actions-panel" id="quick-actions-panel">
-                </div>
+            <h2 style="font-family: var(--font-body); font-weight: 500; margin-bottom: 1rem;">
+                Quick Actions
+            </h2>
+            <div class="quick-actions-panel" id="quick-actions-panel"></div>
         </main>
     </div>
 
     <script>
-        const shopownerData = {
-            profile: {
-                name: "Jane Smith",
-                email: "jane.smith@freshcart.com",
-            },
-            orders: [
-                { id: 1, status: 'shipped' },
-                { id: 2, status: 'pending' },
-                { id: 3, status: 'delivered' },
-                { id: 4, status: 'shipped' },
-            ],
-            payments: [
-                { id: 1, status: 'paid', amount: 500 },
-                { id: 2, status: 'pending', amount: 1200 },
-                { id: 3, status: 'paid', amount: 800 },
-            ],
-            distributors: [
-                { name: 'AgriCorp' },
-                { name: 'FreshFarm' },
-                { name: 'TheGrainery' },
-            ],
-            notifications: [
-                { type: 'new_order', message: 'Order #456 is ready for checkout.' },
-                { type: 'low_stock', message: 'AgriCorp has a special on Fresh Tomatoes!' },
-                { type: 'new_offer', message: 'A new distributor has joined Fresh Cart.' },
-            ]
-        };
-        
-        let cart = [];
+        const API_BASE = "https://fresh-cart-backend-5.onrender.com";
 
-        const sidebar = document.getElementById('sidebar');
-        const hamburgerBtn = document.getElementById('hamburger-btn');
-        const navLinks = document.querySelectorAll('.nav-item a');
-        const logoutBtn = document.querySelector('.logout-btn');
-        const summaryCardsContainer = document.getElementById('summary-cards');
-        const quickActionsPanel = document.getElementById('quick-actions-panel');
-        const notificationsList = document.getElementById('notifications-list');
-        const cartCountSpan = document.querySelector('.cart-count');
+        const sidebar            = document.getElementById('sidebar');
+        const hamburgerBtn       = document.getElementById('hamburger-btn');
+        const navLinks           = document.querySelectorAll('.nav-item a');
+        const logoutBtn          = document.querySelector('.logout-btn');
+        const summaryCards       = document.getElementById('summary-cards');
+        const quickActionsPanel  = document.getElementById('quick-actions-panel');
+        const notificationsList  = document.getElementById('notifications-list');
+        const snapshotDiv        = document.getElementById('order-status-snapshot');
+        const cartCountSpan      = document.querySelector('.cart-count');
 
-        function renderDashboard() {
-            const distributorsCount = shopownerData.distributors.length;
-            const activeOrdersCount = shopownerData.orders.filter(o => o.status !== 'delivered').length;
-            const pendingPaymentsCount = shopownerData.payments.filter(p => p.status === 'pending').length;
-            const deliveredOrdersCount = shopownerData.orders.filter(o => o.status === 'delivered').length;
+        let user = JSON.parse(localStorage.getItem("fc_user") || "{}");
 
-            summaryCardsContainer.innerHTML = `
+        function updateCartCount() {
+            const cart = JSON.parse(localStorage.getItem("freshcart_cart") || "[]");
+            cartCountSpan.textContent = cart.length;
+        }
+
+        function renderSummaryCards({ distributorsCount, activeOrdersCount, pendingPaymentsCount, deliveredOrdersCount }) {
+            summaryCards.innerHTML = `
                 <div class="summary-card">
                     <h3>Available Distributors</h3>
                     <p>${distributorsCount}</p>
@@ -406,14 +394,44 @@
                     <p>${deliveredOrdersCount}</p>
                 </div>
             `;
-            
-            notificationsList.innerHTML = shopownerData.notifications.map(n => `
+        }
+
+        function renderSnapshot({ totalOrders, pendingCount, acceptedCount, shippedCount, outForDeliveryCount, deliveredCount }) {
+            snapshotDiv.innerHTML = `
+                <p><strong>Total orders:</strong> ${totalOrders}</p>
+                <p><strong>Pending:</strong> ${pendingCount}</p>
+                <p><strong>Accepted:</strong> ${acceptedCount}</p>
+                <p><strong>Shipped:</strong> ${shippedCount}</p>
+                <p><strong>Out for delivery:</strong> ${outForDeliveryCount}</p>
+                <p><strong>Delivered:</strong> ${deliveredCount}</p>
+            `;
+        }
+
+        function renderNotifications({ activeOrdersCount, pendingPaymentsCount, deliveredOrdersCount }) {
+            const items = [];
+
+            if (activeOrdersCount > 0) {
+                items.push(`You have ${activeOrdersCount} active order(s) being processed.`);
+            }
+            if (pendingPaymentsCount > 0) {
+                items.push(`There are ${pendingPaymentsCount} payment(s) still pending.`);
+            }
+            if (deliveredOrdersCount > 0) {
+                items.push(`${deliveredOrdersCount} order(s) have been delivered.`);
+            }
+            if (items.length === 0) {
+                items.push("No new updates. You're all caught up!");
+            }
+
+            notificationsList.innerHTML = items.map(msg => `
                 <div class="notification-item">
                     <span class="notification-icon">🔔</span>
-                    <p>${n.message}</p>
+                    <p>${msg}</p>
                 </div>
-            `).join('');
+            `).join("");
+        }
 
+        function renderQuickActions() {
             quickActionsPanel.innerHTML = `
                 <div class="quick-action-card" onclick="window.location.href='shopowner-catalog.html'">
                     <h3>Go to Catalog</h3>
@@ -426,26 +444,110 @@
                 </div>
             `;
         }
-        
+
+        async function fetchDashboardData() {
+            if (!user.user_id) {
+                alert("Please log in again.");
+                window.location.href = "fresh-cart-login.html?role=shop_owner";
+                return;
+            }
+
+            try {
+                const [ordersRes, paymentsRes, distRes] = await Promise.all([
+                    fetch(`${API_BASE}/orders/${user.user_id}`),
+                    fetch(`${API_BASE}/payments/${user.user_id}`),
+                    fetch(`${API_BASE}/distributors`)
+                ]);
+
+                const [ordersData, paymentsData, distributorsData] = await Promise.all([
+                    ordersRes.ok ? ordersRes.json() : [],
+                    paymentsRes.ok ? paymentsRes.json() : [],
+                    distRes.ok ? distRes.json() : []
+                ]);
+
+                const orders = Array.isArray(ordersData) ? ordersData : [];
+                const payments = Array.isArray(paymentsData) ? paymentsData : [];
+                const distributors = Array.isArray(distributorsData) ? distributorsData : [];
+
+                const distributorsCount = distributors.length;
+
+                const normalizedOrders = orders.map(o => ({
+                    status: (o.status || "Pending").toLowerCase()
+                }));
+
+                const totalOrders = normalizedOrders.length;
+                const pendingCount = normalizedOrders.filter(o => o.status === "pending").length;
+                const acceptedCount = normalizedOrders.filter(o => o.status === "accepted").length;
+                const shippedCount = normalizedOrders.filter(o => o.status === "shipped").length;
+                const ofdCount = normalizedOrders.filter(o => o.status === "out for delivery").length;
+                const deliveredCount = normalizedOrders.filter(o => o.status === "delivered").length;
+
+                const activeOrdersCount = normalizedOrders.filter(
+                    o => !["delivered", "declined", "deleted"].includes(o.status)
+                ).length;
+
+                const normalizedPayments = payments.map(p => ({
+                    status: (p.payment_status || p.status || "").toLowerCase()
+                }));
+                const pendingPaymentsCount = normalizedPayments.filter(p => p.status === "pending").length;
+
+                renderSummaryCards({
+                    distributorsCount,
+                    activeOrdersCount,
+                    pendingPaymentsCount,
+                    deliveredOrdersCount: deliveredCount
+                });
+
+                renderSnapshot({
+                    totalOrders,
+                    pendingCount,
+                    acceptedCount,
+                    shippedCount,
+                    outForDeliveryCount: ofdCount,
+                    deliveredCount
+                });
+
+                renderNotifications({
+                    activeOrdersCount,
+                    pendingPaymentsCount,
+                    deliveredOrdersCount: deliveredCount
+                });
+
+            } catch (err) {
+                console.error("❌ Failed to load dashboard data:", err);
+                snapshotDiv.innerHTML = `<p style="color:#c00;">Error loading live data.</p>`;
+                notificationsList.innerHTML = `
+                    <div class="notification-item">
+                        <span class="notification-icon">⚠️</span>
+                        <p>Unable to fetch updates from the server right now.</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Sidebar toggle
         hamburgerBtn.addEventListener('click', () => {
             sidebar.classList.toggle('active');
         });
 
+        // Nav links (normal navigation)
         navLinks.forEach(link => {
             link.addEventListener('click', (e) => {
                 e.preventDefault();
-                const pageHref = e.target.href;
-                window.location.href = pageHref;
+                window.location.href = link.getAttribute("href");
             });
         });
 
+        // Logout: clear real data
         logoutBtn.addEventListener('click', () => {
-            alert('Logging out...');
+            localStorage.clear();
             window.location.href = 'fresh-cart-home.html';
         });
 
         document.addEventListener('DOMContentLoaded', () => {
-            renderDashboard();
+            updateCartCount();
+            renderQuickActions();
+            fetchDashboardData();
         });
     </script>
 </body>
