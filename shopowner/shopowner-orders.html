@@ -462,40 +462,53 @@ document.addEventListener("DOMContentLoaded", () => {
 
     statusFilter.addEventListener("change", () => loadOrders());
 
-    document.addEventListener("click", async (e) => {
-        if (e.target.matches(".view-items-btn")) {
-            const orderId = e.target.dataset.orderId;
+document.addEventListener("click", async (e) => {
+  if (!e.target.matches(".view-items-btn")) return;
 
-            try {
-                const res = await fetch(`${API_BASE}/order_items/${orderId}`);
-                const items = await res.json();
+  const orderId = e.target.dataset.orderId;
 
-                if (!res.ok) {
-                    console.error("❌ /order_items error response:", items);
-                    alert(items.error || "Failed to fetch items from server.");
-                    return;
-                }
+  try {
+    const res = await fetch(`${API_BASE}/order_items/${orderId}`);
 
-                if (!items.length) {
-                    orderItemsPanel.innerHTML = `<h2>Order items</h2><em>No items found for this order.</em>`;
-                    return;
-                }
+    let items;
+    try {
+      items = await res.json();
+    } catch (jsonErr) {
+      console.error("JSON parse error from /order_items:", jsonErr);
+      alert(`Server returned ${res.status} ${res.statusText}, not JSON.`);
+      return;
+    }
 
-                orderItemsPanel.innerHTML = `
-                    <h2>Order #${orderId} items</h2>
-                    ${items.map(it => `
-                        <div class="order-item-row">
-                            <strong>${it.product_name} - ${it.subproduct_name}</strong>
-                            Brand: ${it.brand} | Qty: ${it.quantity} ${it.unit} | Price: ₹${it.price}
-                        </div>
-                    `).join("")}
-                `;
-            } catch (err) {
-                console.error("❌ Failed to fetch order items:", err);
-                alert("Network error while fetching items.");
-            }
-        }
-    });
+    if (!res.ok) {
+      console.error("❌ /order_items server error:", items);
+      alert(items.error || `Server error: ${res.status}`);
+      return;
+    }
+
+    const panel = document.getElementById("order-items-panel");
+    if (!panel) return;
+
+    if (!items.length) {
+      panel.innerHTML = `<h2>Order items</h2><em>No items found for this order.</em>`;
+      return;
+    }
+
+    panel.innerHTML = `
+      <h2>Order #${orderId} items</h2>
+      ${items.map(it => `
+        <div class="order-item-row">
+          <strong>${it.product_name} - ${it.subproduct_name}</strong>
+          Brand: ${it.brand} | Qty: ${it.quantity} ${it.unit} | Price: ₹${it.price}
+        </div>
+      `).join("")}
+    `;
+  } catch (err) {
+    console.error("❌ Network / fetch error for /order_items:", err);
+    alert("Network error while fetching items.");
+  }
+});
+
+
 
     loadOrders();
     startAutoRefresh();
@@ -504,4 +517,5 @@ document.addEventListener("DOMContentLoaded", () => {
 
 </body>
 </html>
+
 
