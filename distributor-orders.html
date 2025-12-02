@@ -203,15 +203,21 @@
   const API_BASE = "https://fresh-cart-backend-5.onrender.com";
 
   const user = JSON.parse(localStorage.getItem("fc_user") || "{}");
-  const orderList = document.getElementById("order-list");
-  const searchInput = document.getElementById("searchInput");
-  const statusFilter = document.getElementById("statusFilter");
 
-  const itemsPanel = document.createElement("div");
-  itemsPanel.id = "order-items-panel";
-  itemsPanel.style.display = "none";
-  itemsPanel.className = "order-items-panel";
-  document.querySelector(".content-area").appendChild(itemsPanel);
+  // DOM references
+  const sidebar          = document.getElementById("sidebar");
+  const hamburgerBtn     = document.getElementById("hamburger-btn");
+  const logoutBtn        = document.querySelector(".logout-btn");
+
+  const orderList        = document.getElementById("order-list");
+  const searchInput      = document.getElementById("searchInput");
+  const statusFilter     = document.getElementById("statusFilter");
+
+  const receiptPanel     = document.getElementById("receipt-panel");
+  const receiptMeta      = document.getElementById("receipt-meta");
+  const receiptItems     = document.getElementById("receipt-items");
+  const receiptTotal     = document.getElementById("receipt-total");
+  const receiptTotalValue= document.getElementById("receipt-total-value");
 
   let orders = [];
   let autoRefreshTimer = null;
@@ -220,26 +226,34 @@
     return "₹" + Number(v || 0).toFixed(2);
   }
 
+  // 🔄 Load distributor orders from backend
   async function loadOrders(animate = false) {
     if (!user.user_id) return;
 
-    const res = await fetch(`${API_BASE}/distributor/orders/${user.user_id}`);
-    const data = await res.json();
-    renderOrders(data, animate);
+    try {
+      const res = await fetch(`${API_BASE}/distributor/orders/${user.user_id}`);
+      if (!res.ok) throw new Error("Failed to fetch orders: " + res.status);
+      const data = await res.json();
+      orders = Array.isArray(data) ? data : [];
+      renderOrders(orders, animate);
+    } catch (err) {
+      console.error("❌ Failed to load orders:", err);
+      orderList.innerHTML = `<p style="text-align:center;">Error loading orders.</p>`;
+    }
   }
 
+  // 🧱 Render order cards (left side)
   function renderOrders(newOrders, animate) {
     orderList.innerHTML = "";
 
-    const query = searchInput.value.toLowerCase();
-    const filter = statusFilter.value.toLowerCase();
+    const query  = (searchInput.value || "").toLowerCase();
+    const filter = (statusFilter.value || "all").toLowerCase();
 
     const list = newOrders.filter(o =>
       (filter === "all" || (o.status || "").toLowerCase() === filter) &&
-      (String(o.order_id).includes(query) || (o.shop_owner || "").toLowerCase().includes(query))
+      (String(o.order_id).includes(query) ||
+       (o.shop_owner || "").toLowerCase().includes(query))
     );
-
-    orders = newOrders;
 
     if (!list.length) {
       orderList.innerHTML = `<p style="text-align:center;">No matching orders</p>`;
@@ -248,17 +262,18 @@
 
     list.forEach(order => {
       const div = document.createElement("div");
-      const cls = `status-${order.status.toLowerCase().replace(/\s+/g, '-')}`;
+      const statusSafe = (order.status || "").toLowerCase().replace(/\s+/g, "-");
+      const cls = `status-${statusSafe || "pending"}`;
 
       div.className = "order-card";
       div.innerHTML = `
         <div class="order-header">
           <span>Order #${order.order_id}</span>
-          <span class="order-status ${cls}">${order.status}</span>
+          <span class="order-status ${cls}">${order.status || "Pending"}</span>
         </div>
         <div class="order-details">
-          <p><strong>Shopkeeper:</strong> ${order.shop_owner}</p>
-          <p><strong>Date:</strong> ${order.order_date}</p>
+          <p><strong>Shopkeeper:</strong> ${order.shop_owner || "—"}</p>
+          <p><strong>Date:</strong> ${order.order_date || "—"}</p>
           <p><strong>Total:</strong> ${formatINR(order.amount)}</p>
 
           <button class="btn-secondary view-items-btn" data-id="${order.order_id}">
@@ -274,8 +289,10 @@
     });
   }
 
+  // 🧠 Decide which action buttons to show
   function renderButtons(order) {
-    switch ((order.status || "").toLowerCase()) {
+    const status = (order.status || "").toLowerCase();
+    switch (status) {
       case "pending":
         return `
           <button class="btn-primary" data-action="Accepted" data-id="${order.order_id}">Accept</button>
@@ -288,114 +305,141 @@
       case "out for delivery":
         return `<button class="btn-primary" data-action="Delivered" data-id="${order.order_id}">Mark Delivered</button>`;
       default:
-        return "";
+        return ""; // delivered / declined
     }
   }
 
-  // 📦 Load Receipt Items
+  // 📦 Load receipt items for a given order
   async function loadReceipt(orderId) {
-    itemsPanel.style.display = "block";
-    itemsPanel.innerHTML = `<div class="order-items-message">Loading receipt...</div>`;
+    const idNum = Number(orderId);
+    const order = orders.find(o => Number(o.order_id) === idNum);
+
+    receiptMeta.textContent = `Loading receipt for Order #${orderId}...`;
+    receiptItems.innerHTML = "";
+    receiptTotal.style.display = "none";
 
     try {
       const res = await fetch(`${API_BASE}/order_items/${orderId}`);
       const data = await res.json();
 
       if (!Array.isArray(data) || !data.length) {
-        itemsPanel.innerHTML = `<p class="order-items-message">No products found in this order.</p>`;
+        receiptMeta.textContent = `No products found in Order #${orderId}.`;
+        receiptItems.innerHTML = "";
         return;
       }
 
-      renderReceipt(orderId, data);
-    } catch {
-      itemsPanel.innerHTML = `<p class="order-items-message">Failed to load receipt.</p>`;
+      renderReceipt(orderId, order, data);
+    } catch (err) {
+      console.error("❌ Failed to load order items:", err);
+      receiptMeta.textContent = `Failed to load receipt for Order #${orderId}.`;
+      receiptItems.innerHTML = "";
     }
   }
 
-  function renderReceipt(orderId, items) {
-    const order = orders.find(o => o.order_id === orderId);
+  // 🧾 Render receipt on the right panel
+  function renderReceipt(orderId, order, items) {
+    const safeOrder = order || {};
     let total = 0;
 
-    const rows = items.map((it, i) => {
-      const qty = Number(it.quantity || 0);
-      const price = Number(it.price || it.price_per_unit || 0);
-      const line = qty * price;
+    const rowsHtml = items.map((it, idx) => {
+      const name =
+        it.product_name ||
+        it.subproduct_name ||
+        it.name ||
+        `Item ${idx + 1}`;
+
+      const qty   = Number(it.quantity || it.qty || 0);
+      const unit  = it.unit || it.unit_name || "";
+      const price = Number(it.price || it.price_per_unit || it.rate || 0);
+      const line  = qty * price;
       total += line;
 
       return `
-        <tr>
-          <td>${i + 1}</td>
-          <td>${it.product_name || it.name}</td>
-          <td>${qty} ${it.unit}</td>
-          <td>${formatINR(price)}</td>
-          <td>${formatINR(line)}</td>
-        </tr>
+        <div class="receipt-row">
+          <div class="receipt-name">
+            ${idx + 1}. ${name}
+          </div>
+          <div class="receipt-meta-line">
+            ${qty || ""} ${unit || ""} ${price ? `× ${formatINR(price)}` : ""} ${line ? `= ${formatINR(line)}` : ""}
+          </div>
+        </div>
       `;
     }).join("");
 
-    itemsPanel.innerHTML = `
-      <div class="order-items-header">
-        <h2>Receipt – Order #${orderId}</h2>
-        <div class="order-items-meta">
-          Shop Owner: ${order.shop_owner}<br>
-          Status: ${order.status}
-        </div>
-      </div>
-
-      <table class="receipt-items-table">
-        <thead>
-          <tr>
-            <th>#</th>
-            <th>Product</th>
-            <th>Quantity</th>
-            <th>Rate</th>
-            <th>Total</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${rows}
-          <tr>
-            <td colspan="4" style="text-align:right;font-weight:700;">Grand Total</td>
-            <td style="font-weight:700;">${formatINR(order.amount || total)}</td>
-          </tr>
-        </tbody>
-      </table>
+    receiptMeta.innerHTML = `
+      Order #${orderId}<br>
+      Shop Owner: ${safeOrder.shop_owner || "—"}<br>
+      Status: ${safeOrder.status || "Pending"}<br>
+      Date: ${safeOrder.order_date || "—"}
     `;
-    itemsPanel.scrollIntoView({ behavior: "smooth", block: "start" });
+
+    receiptItems.innerHTML = rowsHtml;
+    receiptTotalValue.textContent = formatINR(safeOrder.amount || total);
+    receiptTotal.style.display = "flex";
+
+    receiptPanel.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
-  // EVENT HANDLERS
-  document.addEventListener("click", async e => {
-    if (e.target.matches(".view-items-btn")) {
-      loadReceipt(e.target.dataset.id);
-    }
-
-    if (e.target.dataset.action) {
-      const id = e.target.dataset.id;
-      const status = e.target.dataset.action;
-
-      await fetch(`${API_BASE}/distributor/update_status/${id}`, {
+  // 🔁 Update status (Accept, Shipped, etc.)
+  async function updateStatus(orderId, status) {
+    try {
+      const res = await fetch(`${API_BASE}/distributor/update_status/${orderId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status })
       });
+      if (!res.ok) {
+        console.error("Status update failed:", await res.text());
+      }
+    } catch (err) {
+      console.error("❌ Error updating status:", err);
+    }
+  }
 
-      loadOrders(true);
+  // 🎛 Event delegation for card buttons
+  document.addEventListener("click", async (e) => {
+    // View Receipt
+    if (e.target.closest(".view-items-btn")) {
+      const id = e.target.closest(".view-items-btn").dataset.id;
+      loadReceipt(id);
+      return;
+    }
+
+    // Status action buttons
+    const actionBtn = e.target.closest("[data-action]");
+    if (actionBtn) {
+      const id = actionBtn.dataset.id;
+      const status = actionBtn.dataset.action;
+      await updateStatus(id, status);
+      await loadOrders(true);
     }
   });
 
+  // Filters
   searchInput.addEventListener("input", () => renderOrders(orders));
   statusFilter.addEventListener("change", () => renderOrders(orders));
 
+  // Sidebar + logout
+  hamburgerBtn?.addEventListener("click", () => {
+    sidebar.classList.toggle("active");
+  });
+
+  logoutBtn?.addEventListener("click", () => {
+    localStorage.clear();
+    window.location.href = "fresh-cart-home.html";
+  });
+
+  // Init
   document.addEventListener("DOMContentLoaded", () => {
     loadOrders();
-    setInterval(() => loadOrders(true), 6000);
+    autoRefreshTimer = setInterval(() => loadOrders(true), 6000);
   });
 </script>
 
 
 </body>
 </html>
+
 
 
 
