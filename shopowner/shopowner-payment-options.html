@@ -45,7 +45,13 @@
       z-index: 1000;
     }
     .sidebar.active { left: 0; }
-    .logo { padding: 2rem 1rem; text-align: center; color: var(--secondary-light); font-size: 1.5rem; font-weight: bold; }
+    .logo {
+      padding: 2rem 1rem;
+      text-align: center;
+      color: var(--secondary-light);
+      font-size: 1.5rem;
+      font-weight: bold;
+    }
     .main-nav ul { list-style: none; padding: 0; }
     .nav-item a {
       display: block;
@@ -71,11 +77,17 @@
     .logout-btn:hover { background-color: #cccccc; }
 
     .header {
-      position: fixed; top: 0; left: 0; width: 100%;
-      padding: 1rem 2rem; background-color: var(--card-bg);
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      padding: 1rem 2rem;
+      background-color: var(--card-bg);
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
       z-index: 1001;
-      display: flex; justify-content: space-between; align-items: center;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     }
 
     .hamburger-btn {
@@ -112,7 +124,7 @@
       padding: 2rem;
       border-radius: 12px;
       box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-      max-width: 600px;
+      max-width: 700px;
       margin: 0 auto;
     }
 
@@ -167,6 +179,53 @@
 
     .hidden { display: none; }
 
+    /* Receipt styles */
+    .receipt-block {
+      margin-top: 1.5rem;
+      border-top: 1px dashed var(--border-color);
+      padding-top: 1.25rem;
+    }
+    .receipt-items {
+      list-style: none;
+      margin-bottom: 0.75rem;
+    }
+    .receipt-item {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.9rem;
+      margin-bottom: 0.35rem;
+    }
+    .receipt-line,
+    .receipt-total {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 0.35rem;
+      font-size: 0.95rem;
+    }
+    .receipt-total {
+      font-weight: 600;
+      margin-top: 0.75rem;
+      border-top: 1px solid var(--border-color);
+      padding-top: 0.75rem;
+    }
+
+    /* UPI QR */
+    .upi-qr {
+      margin-top: 1rem;
+      text-align: center;
+    }
+    .upi-qr-text {
+      font-size: 0.9rem;
+      color: var(--text-light);
+      margin-bottom: 0.75rem;
+    }
+    .upi-qr-img {
+      max-width: 260px;
+      width: 100%;
+      border-radius: 16px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+    }
+
     @media (max-width: 768px) {
       .sidebar { width: 100%; left: -100%; }
       .sidebar.active { left: 0; }
@@ -201,25 +260,56 @@
       <div class="payment-options-card">
         <form id="payment-form">
           <h2>Payment for Order #<span id="order-id-display">...</span></h2>
-          <p style="margin-bottom:1.5rem;">Grand Total: <span style="font-weight:600;" id="total-amount-display">₹0.00</span></p>
+          <p style="margin-bottom:1rem;">
+            Grand Total:
+            <span style="font-weight:600;" id="total-amount-display">₹0.00</span>
+          </p>
 
+          <!-- Full receipt -->
+          <div class="receipt-block">
+            <h3 style="margin-bottom:0.75rem;">Order Receipt</h3>
+            <ul id="receipt-items" class="receipt-items"></ul>
+            <div class="receipt-line">
+              <span>Delivery Fee</span>
+              <span>₹30.00</span>
+            </div>
+            <div class="receipt-total">
+              <span>Total Payable</span>
+              <span id="receipt-grand-total">₹0.00</span>
+            </div>
+          </div>
+
+          <!-- Payment methods -->
+          <h3 style="margin:1.5rem 0 0.75rem;">Select Payment Method</h3>
           <div class="payment-methods">
-            <button type="button" class="payment-method-btn" data-method="card">Credit/Debit Card</button>
-            <button type="button" class="payment-method-btn" data-method="upi">UPI</button>
-            <button type="button" class="payment-method-btn" data-method="cod">Cash on Delivery</button>
+            <button type="button" class="payment-method-btn" data-method="upi">
+              UPI (Google Pay / PhonePe / Paytm)
+            </button>
+            <button type="button" class="payment-method-btn" data-method="cod">
+              Cash on Delivery
+            </button>
           </div>
 
-          <div id="card-form" class="hidden">
-            <div class="form-group"><label>Card Number</label><input type="text" id="card-number" placeholder="XXXX-XXXX-XXXX-XXXX"></div>
-            <div class="form-group"><label>Expiry Date</label><input type="text" id="expiry-date" placeholder="MM/YY"></div>
-            <div class="form-group"><label>CVV</label><input type="text" id="cvv" placeholder="CVV"></div>
-          </div>
-
+          <!-- UPI only -->
           <div id="upi-form" class="hidden">
-            <div class="form-group"><label>UPI ID</label><input type="text" id="upi-id" placeholder="yourname@upi"></div>
+            <div class="form-group">
+              <label for="upi-id">Your UPI ID</label>
+              <input type="text" id="upi-id" placeholder="yourname@upi">
+            </div>
+
+            <div id="upi-qr-section" class="upi-qr hidden">
+              <p class="upi-qr-text">
+                Scan this QR with any UPI app and complete the payment.
+              </p>
+              <!-- 🔽 update the src path to where you saved the QR image -->
+           <img src="QrCode.jpeg.jpg" alt="UPI QR Code" class="upi-qr-img">
+
+            </div>
           </div>
 
-          <button type="submit" class="btn-primary" id="place-order-btn" style="margin-top:1rem;">Place Order</button>
+          <button type="submit" class="btn-primary" id="place-order-btn" style="margin-top:1.25rem;">
+            Place Order
+          </button>
         </form>
       </div>
     </main>
@@ -234,38 +324,83 @@
 
     const orderIdDisplay = document.getElementById("order-id-display");
     const totalAmountDisplay = document.getElementById("total-amount-display");
+    const receiptItems = document.getElementById("receipt-items");
+    const receiptGrandTotal = document.getElementById("receipt-grand-total");
+
     const paymentForm = document.getElementById("payment-form");
     const paymentButtons = document.querySelectorAll(".payment-method-btn");
-    const cardForm = document.getElementById("card-form");
     const upiForm = document.getElementById("upi-form");
+    const upiIdInput = document.getElementById("upi-id");
+    const upiQrSection = document.getElementById("upi-qr-section");
 
     let selectedMethod = null;
 
+    function formatINR(n) {
+      return "₹" + Number(n || 0).toFixed(2);
+    }
+
+    // Load order id, total and build receipt from localStorage
     function loadOrderSummary() {
       const orderId = localStorage.getItem("order_id") || "N/A";
-      const grandTotal = localStorage.getItem("checkout_grand_total") || "0";
+      const grandTotal = parseFloat(localStorage.getItem("checkout_grand_total") || "0");
       orderIdDisplay.textContent = orderId;
-      totalAmountDisplay.textContent = "₹" + parseFloat(grandTotal).toFixed(2);
+      totalAmountDisplay.textContent = formatINR(grandTotal);
+      receiptGrandTotal.textContent = formatINR(grandTotal);
+
+      const cart = JSON.parse(localStorage.getItem("freshcart_cart") || "[]");
+      receiptItems.innerHTML = "";
+
+      if (!cart.length) {
+        const li = document.createElement("li");
+        li.className = "receipt-item";
+        li.innerHTML = `<span>Cart is empty</span><span>₹0.00</span>`;
+        receiptItems.appendChild(li);
+        return;
+      }
+
+      cart.forEach(item => {
+        const price = Number(item.price) || 0;
+        const qty = Number(item.quantity) || 0;
+        const line = price * qty;
+
+        const li = document.createElement("li");
+        li.className = "receipt-item";
+        li.innerHTML = `<span>${item.productName} (${item.variantName}) × ${qty}</span>
+                        <span>${formatINR(line)}</span>`;
+        receiptItems.appendChild(li);
+      });
     }
 
-    function toggleRequiredInputs(method) {
-      document.querySelectorAll("#card-form input, #upi-form input").forEach(inp => inp.required = false);
-      if (method === "card") document.querySelectorAll("#card-form input").forEach(inp => inp.required = true);
-      if (method === "upi") document.querySelectorAll("#upi-form input").forEach(inp => inp.required = true);
-    }
-
+    // Payment method selection (UPI / COD)
     paymentButtons.forEach(btn => {
       btn.addEventListener("click", () => {
         paymentButtons.forEach(b => b.classList.remove("selected"));
         btn.classList.add("selected");
         selectedMethod = btn.dataset.method;
 
-        cardForm.classList.add("hidden");
-        upiForm.classList.add("hidden");
-        if (selectedMethod === "card") cardForm.classList.remove("hidden");
-        if (selectedMethod === "upi") upiForm.classList.remove("hidden");
-        toggleRequiredInputs(selectedMethod);
+        // Show / hide UPI form + QR
+        if (selectedMethod === "upi") {
+          upiForm.classList.remove("hidden");
+          upiIdInput.required = true;
+          // only show QR when user actually types something
+          if (upiIdInput.value.trim()) {
+            upiQrSection.classList.remove("hidden");
+          }
+        } else {
+          upiForm.classList.add("hidden");
+          upiIdInput.required = false;
+          upiQrSection.classList.add("hidden");
+        }
       });
+    });
+
+    // Show QR only after they type their UPI ID
+    upiIdInput.addEventListener("input", () => {
+      if (upiIdInput.value.trim().length > 0) {
+        upiQrSection.classList.remove("hidden");
+      } else {
+        upiQrSection.classList.add("hidden");
+      }
     });
 
     async function updatePayment(orderId, status) {
@@ -284,13 +419,21 @@
     paymentForm.addEventListener("submit", async e => {
       e.preventDefault();
       const orderId = localStorage.getItem("order_id");
-      if (!selectedMethod) return alert("Please select a payment method.");
+
+      if (!selectedMethod) {
+        alert("Please select a payment method.");
+        return;
+      }
+      if (selectedMethod === "upi" && !upiIdInput.value.trim()) {
+        alert("Please enter your UPI ID.");
+        return;
+      }
 
       const btn = document.getElementById("place-order-btn");
       btn.disabled = true;
       btn.textContent = "Processing...";
 
-      let status = selectedMethod === "cod" ? "Pending" : "Paid";
+      const status = selectedMethod === "cod" ? "Pending" : "Paid";
       await updatePayment(orderId, status);
       localStorage.setItem("payment_status", status);
 
@@ -299,7 +442,6 @@
 
     document.addEventListener("DOMContentLoaded", () => {
       loadOrderSummary();
-      toggleRequiredInputs(null);
       hamburgerBtn.addEventListener("click", () => sidebar.classList.toggle("active"));
       logoutBtn.addEventListener("click", () => {
         localStorage.clear();
@@ -309,4 +451,3 @@
   </script>
 </body>
 </html>
-
