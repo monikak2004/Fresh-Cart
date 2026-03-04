@@ -185,12 +185,11 @@ document.addEventListener("DOMContentLoaded", () => {
         if (!res.ok) throw new Error(data.error || "Login failed");
 
         // Save user in localStorage (incl token)
-        localStorage.setItem("fc_user", JSON.stringify({
-          user_id: data.user_id,
-          role: data.role,
-          name: data.name,
-          token: data.token
-        }));
+    if (data.role === "shop_owner") {
+  localStorage.setItem("fc_shop_owner", JSON.stringify(data));
+} else if (data.role === "distributor") {
+  localStorage.setItem("fc_distributor", JSON.stringify(data));
+}
 
         // Redirect
         if (data.role === "shop_owner") {
@@ -245,5 +244,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
 </body>
 </html>
+
 
 
