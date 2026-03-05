@@ -89,7 +89,7 @@
   <script>
     const API_BASE = "https://fresh-cart-backend-10.onrender.com";
 
-    const user = JSON.parse(localStorage.getItem("fc_user") || "{}");
+    let user = JSON.parse(localStorage.getItem("fc_shop_owner") || "{}");
     const orderId = localStorage.getItem("order_id");
 
     async function loadOrderDetails() {
@@ -147,6 +147,7 @@
   </script>
 </body>
 </html>
+
 
 
 
