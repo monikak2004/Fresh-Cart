@@ -259,7 +259,7 @@ function selectDistributor(distributor, card) {
 
 async function placeOrder() {
   const cart = JSON.parse(localStorage.getItem("freshcart_cart") || "[]");
-  const user = JSON.parse(localStorage.getItem("fc_user") || "{}");
+  const user = JSON.parse(localStorage.getItem("fc_shop_owner") || "{}");
   const total = parseFloat(localStorage.getItem("checkout_cart_total") || "0");
   const deliveryFee = parseFloat(localStorage.getItem("checkout_delivery_fee") || "0");
 
@@ -310,5 +310,6 @@ document.addEventListener("DOMContentLoaded", loadDistributors);
 
 </body>
 </html>
+
 
 
