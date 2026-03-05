@@ -317,7 +317,7 @@ const logoutBtn = document.querySelector(".logout-btn");
 const paymentsList = document.getElementById("payments-list");
 const statusFilter = document.getElementById("statusFilter");
 
-const user = JSON.parse(localStorage.getItem("fc_user") || "{}");
+let user = JSON.parse(localStorage.getItem("fc_shop_owner") || "{}");
 
 // ✅ Fetch payments from backend
 async function fetchPayments() {
@@ -391,4 +391,5 @@ document.addEventListener("DOMContentLoaded", () => {
 
 </body>
 </html>
+
 
