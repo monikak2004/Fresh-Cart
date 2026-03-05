@@ -355,8 +355,7 @@
 <script>
 const API_BASE = "https://fresh-cart-backend-10.onrender.com";
 
-const user = JSON.parse(localStorage.getItem("fc_user") || "{}");
-
+let user = JSON.parse(localStorage.getItem("fc_distributor") || "{}");
 const sidebar = document.getElementById("sidebar");
 const hamburgerBtn = document.getElementById("hamburger-btn");
 const logoutBtn = document.querySelector(".logout-btn");
@@ -508,4 +507,5 @@ document.addEventListener("DOMContentLoaded", () => {
 </body>
 
 </html>
+
 
