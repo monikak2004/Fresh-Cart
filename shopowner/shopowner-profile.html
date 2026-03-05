@@ -319,7 +319,7 @@
 <script>
     const API_BASE = "https://fresh-cart-backend-10.onrender.com";
 
-const user = JSON.parse(localStorage.getItem("fc_user") || "{}");
+let user = JSON.parse(localStorage.getItem("fc_shop_owner") || "{}");
 
 // --- DOM Elements ---
 const sidebar = document.getElementById('sidebar');
@@ -414,4 +414,5 @@ document.addEventListener("DOMContentLoaded", () => {
 </body>
 
 </html>
+
 
