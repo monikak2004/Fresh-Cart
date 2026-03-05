@@ -328,7 +328,7 @@
         const activeShopkeepersEl  = document.getElementById('active-shopkeepers-list');
         const quickActionsPanel    = document.getElementById('quick-actions-panel');
 
-        let user = JSON.parse(localStorage.getItem("fc_user") || "{}");
+        let user = JSON.parse(localStorage.getItem("fc_distributor") || "{}");
 
         function ensureDistributor() {
             if (!user.user_id || (user.role && user.role.toLowerCase() !== "distributor")) {
@@ -569,4 +569,5 @@
     </script>
 </body>
 </html>
+
 
