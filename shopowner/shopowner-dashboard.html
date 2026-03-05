@@ -368,7 +368,7 @@
         const snapshotDiv        = document.getElementById('order-status-snapshot');
         const cartCountSpan      = document.querySelector('.cart-count');
 
-        let user = JSON.parse(localStorage.getItem("fc_user") || "{}");
+       let user = JSON.parse(localStorage.getItem("fc_shop_owner") || "{}");
 
         function updateCartCount() {
             const cart = JSON.parse(localStorage.getItem("freshcart_cart") || "[]");
@@ -552,4 +552,5 @@
     </script>
 </body>
 </html>
+
 
